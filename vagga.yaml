@@ -1,0 +1,121 @@
+containers:
+
+  imitation:
+    setup:
+    - !Ubuntu xenial
+    - !UbuntuRepo
+      url: http://repo.mglawica.org/ubuntu/
+      suite: xenial
+      components: [verwalter-testing]
+      trusted: true
+    - !Install [verwalter]
+    - !PipConfig { dependencies: true }
+    - !Py3Install
+      - aiohttp==0.22.5
+    - !Download
+      url: https://raw.githubusercontent.com/tailhook/verwalter/master/util/fake-cantal.py
+      path: /usr/bin/fake-cantal
+    - !Download
+      url: https://raw.githubusercontent.com/tailhook/verwalter/master/util/fetch-runtime.py
+      path: /usr/bin/fetch-runtime
+    - !Sh |
+        chmod +x /usr/bin/fake-cantal /usr/bin/fetch-runtime
+
+  wasm:
+    environ: &rustenv
+      PATH: /usr/local/bin:/usr/bin:/bin
+      HOME: /work/target
+      RUST_BACKTRACE: 1
+    setup:
+    - !Ubuntu xenial
+    - !UbuntuUniverse
+    - &pkgs !Install [build-essential, ca-certificates, vim]
+    - &rust !TarInstall
+      url: https://static.rust-lang.org/dist/rust-beta-x86_64-unknown-linux-gnu.tar.gz
+      script: "./install.sh --prefix=/usr --components=rustc,cargo \
+               --components=rustc,rust-std-x86_64-unknown-linux-gnu,cargo"
+    - !TarInstall
+      url: "https://static.rust-lang.org/dist/rust-std-beta-wasm32-unknown-unknown.tar.gz"
+      script: "./install.sh --prefix=/usr --components=rust-std-wasm32-unknown-unknown"
+    - !Sh cargo install --root=/usr --git https://github.com/alexcrichton/wasm-gc
+    - &bulk !Tar
+      url: "https://github.com/tailhook/bulk/releases/download/v0.4.9/bulk-v0.4.9.tar.gz"
+      sha256: 23471a9986274bb4b7098c03e2eb7e1204171869b72c45385fcee1c64db2d111
+      path: /
+
+  js:
+    setup:
+    - !Alpine v3.7
+    - !NpmConfig
+    - !YarnDependencies
+      dir: "frontend"
+      optional: true
+    environ:
+      NODE_PATH: "/usr/lib/node_modules"
+      HOME: /tmp
+
+
+commands:
+
+  _mkdirs: !Command
+    description: Make dirs for test run of a verwalter
+    container: imitation
+    run: |
+      mkdir -p scheduler/v1
+      mkdir -p tmp/cfg
+      mkdir -p tmp/cfg/frontend
+      ln -sfn ../../../public tmp/cfg/frontend/common
+      mkdir -p tmp/cfg/machine
+      mkdir -p tmp/cfg/runtime
+      mkdir -p tmp/cfg/sandbox
+      ln -sfn /work/scheduler tmp/cfg/scheduler
+      ln -sfn /work/templates tmp/cfg/templates
+
+  make-js: !Command
+    description: Make default javascripts
+    container:  js
+    work-dir: frontend
+    run: [webpack, --progress]
+
+  make-js-release: !Command
+    description: Make default javascripts
+    container:  js
+    work-dir: frontend
+    environ:
+      NODE_ENV: production
+    run: [webpack, --progress]
+
+  make-scheduler: !Command
+    description: Compile scheduler
+    container: wasm
+    prerequisites: [_mkdirs]
+    run: |
+      cargo build --target=wasm32-unknown-unknown --release
+      wasm-gc \
+        target/wasm32-unknown-unknown/release/kokkupanek-scheduler.wasm \
+        scheduler/v1/scheduler.wasm
+
+  run: !Supervise
+    description: Run some example configuration
+    prerequisites:
+    - _mkdirs
+    - make-scheduler
+    - make-js
+    children:
+      cantal: !Command
+        container: imitation
+        run: |
+          exec fake-cantal --peers "alpha"
+      verw: !Command
+        container: imitation
+        environ:
+          RUST_LOG: warn,verwalter::elect::network=off
+        run:
+        - verwalter
+        - --config-dir=/work/tmp/cfg
+        - --storage-dir=/work/tmp/vw
+        - --log-dir=/tmp/logs
+        - --override-machine-id=deadbeef01
+        - --hostname=alpha
+        - --debug-force-leader
+        - --dry-run
