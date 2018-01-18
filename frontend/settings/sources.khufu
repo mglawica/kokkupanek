@@ -4,6 +4,10 @@ import {go} from 'khufu-routing'
 style:
   .fixed-width
     width: 10em
+  .ui.piled.segment
+    z-index: 1
+  .strike
+    text-decoration: line-through
 
 
 view sources(router):
@@ -15,15 +19,73 @@ view sources(router):
     new_source(router)
 
 view new_source(router):
-  <h1> "Adding New Source"
+  <h1>
+    "Adding a New Source "
+    <i.help.green.small.circle.icon.pointer>
+
+  <div.ui.grid.container>
+    <div.four.wide.column>
+      <p.ui.piled.segment> "
+        A source should be though as an equivalent to a git/mercurial
+        repository, although it may include submodules or track forks too or
+        might be a part of a monorepo.
+      "
+    <div.four.wide.column>
+      <p.ui.piled.segment> "
+        More specifically it's a single directory in a cluster where you upload
+        container images.  Usually CI system does upload, so upload keys are
+        closely tied to a source.
+      "
+    <div.four.wide.column>
+      <p.ui.piled.segment> "
+        Multiple containers might be uploaded from a source and multiple
+        branches are tracked. We keep upgradable and downgradable versions
+        for each branch.
+      "
+    <div.four.wide.column>
+      <p.ui.piled.segment> "
+        You can compose deployment environments from multiple sources.
+        Each source having independent version of the code and tracking
+        a specific branch.
+      "
+
+
   <form.ui.form.grid.container>
     <div.row>
-      <div.field.six.wide.column>
+      <div.ui.field.six.wide.column>
         <div.ui.icon.input.loading?(false)>
-          <input type="text" placeholder="Identifier">
+          <input type="text" placeholder="Slug">
           <i.check?(false).mark.icon>
         <div class="ui pointing label">
-          "The good identifier is a https:// git repository url"
+          "Alphanumerics and dash only. Do not shorten it too much. "
+          <i.green.circle.question.icon>
+      <div.ui.field.eight.wide.column>
+        <div.ui.piled.segment>
+          <p>
+            "A globally recognizable slug for your repository. "
+            "You will be able to upload image into: "
+          <pre.ui.green.segment>
+            "ciruela upload server:/code-your-slug/...\n"
+            "ciruela upload server:/assets-your-slug/...\n"
+          <p>
+            "Good idea: include a team in name: "
+            <code>
+              "crm-celery"
+            <br>
+            "Bad idea: include a branch or installation: "
+            <code.strike>
+              "ninja-staging"
+            <br>
+            "If name of the project is unique enough, it okay: "
+            <code>
+              "drunken-ninja"
+            <br>
+            "But not if it's a generic name like "
+            <code.strike>
+              "worker"
+            " or "
+            <code.strike>
+              "fileserver"
     <div.row>
       <div.wide.column>
         <h2.ui.dividing.header> "Keys"
