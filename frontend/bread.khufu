@@ -1,0 +1,29 @@
+import {go} from 'khufu-routing'
+
+
+view crumbs(router):
+  if not router.at():
+    <div.item>
+      <div.ui.breadcrumb>
+        <i.chevron.right.icon.divider>
+        if let sub = router.at('settings'):
+          if sub.at():
+            <div.active.section> "Settings"
+          else:
+            <a.section href=sub.rel('')>
+              link {click} go(event) -> @sub
+              "Settings"
+            <i.chevron.right.icon.divider>
+            settings(sub)
+
+view settings(router):
+  if let sub = router.at('sources'):
+    if sub.at():
+      <div.active.section> "Sources"
+    else:
+      <a.section> "Sources"
+      if sub.at('new'):
+        <i.chevron.right.icon.divider>
+        <div.active.section>
+          "New Source"
+  else:

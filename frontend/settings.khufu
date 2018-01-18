@@ -1,0 +1,17 @@
+import {go} from 'khufu-routing'
+import {sources} from './settings/sources.khufu'
+
+style:
+  .grid.container
+    padding-top: 1em
+
+
+view settings(router):
+  <div.ui.one.column.grid.container>
+    <div.ui.top.attached.tabular.menu>
+      <a.item.active?(router.at('sources')) href=router.rel('sources')>
+        link {click} go(event) -> @router
+        "Sources"
+    if let sub = router.at('sources'):
+      <div.column>
+        sources(sub)

@@ -1,0 +1,69 @@
+import {go} from 'khufu-routing'
+
+
+style:
+  .fixed-width
+    width: 10em
+
+
+view sources(router):
+  if router.at():
+    <button.ui.button>
+      link {click} go('new') -> @router
+      "New Source"
+  else:
+    new_source(router)
+
+view new_source(router):
+  <h1> "Adding New Source"
+  <form.ui.form.grid.container>
+    <div.row>
+      <div.field.six.wide.column>
+        <div.ui.icon.input.loading?(false)>
+          <input type="text" placeholder="Identifier">
+          <i.check?(false).mark.icon>
+        <div class="ui pointing label">
+          "The good identifier is a https:// git repository url"
+    <div.row>
+      <div.wide.column>
+        <h2.ui.dividing.header> "Keys"
+    <div.row>
+      <div.ui.input.twelve.wide.column>
+        <input.mono type="text" placeholder="ssh-key ...">
+          //link {blur} update_if_empty(@comment_input)
+          //link {blur} add another row
+      <div.ui.input.four.wide.column>
+        <input.mono type="text" placeholder="Comment/Name">
+    <div.row>
+      <div.field.wide.column>
+        <button.ui.button.disabled> "Generate a New Key"
+        <div class="ui left pointing label">
+          "Not implemented yet"
+    <div.row>
+      <div.wide.column>
+        <h2.ui.dividing.header> "Servers"
+        <div.ui.divided.selection.list>
+          <div.item>
+            <div.ui.label.fixed-width> "Active"
+            <div.ui.basic.label> "alpha"
+            <div.ui.basic.label> "gamma"
+          <div.item>
+            <div.ui.label.fixed-width> "Backup"
+            <div.ui.basic.label> "beta"
+          <div.item>
+            <div.ui.label.fixed-width> "Max Allowed"
+            <div.ui.blue.label>
+              <i.large.plus.square.outline.icon>
+              "25 "
+              "servers"
+          <div.item>
+            <div.ui.label.fixed-width> "Assets"
+            <div.ui.basic.label> "sigma"
+            <div.ui.basic.label> "delta"
+        <div.field>
+          <button.ui.button.disabled> "Change Server Alignment"
+          <div class="ui left pointing label">
+            "Not implemented yet"
+    <button.ui.large.primary.button>
+      "Save"
+

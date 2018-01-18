@@ -1,4 +1,6 @@
 import {go} from 'khufu-routing'
+import {crumbs} from './bread.khufu'
+import {settings} from './settings.khufu'
 
 
 view main(router, version):
@@ -8,13 +10,10 @@ view main(router, version):
       <a.item.active?(router.at()) href=router.rel('')>
         link {click} go(event) -> @router
         "Dashboard"
-      <div.item.ui.breadcrumb>
-        <a.section> "Projects"
-        <i.right.chevron.icon.divider>
-        <a.section> "Prom"
-        <i.right.chevron.icon.divider>
-        <div.active.section> "madmax-ru"
+      crumbs(router)
       <div.right.menu>
         <a.item.active?(router.at('settings')) href=router.rel('settings')>
           link {click} go(event) -> @router
           <i.setting.icon title="Settings">
+    if let sub = router.at('settings'):
+      settings(sub)
