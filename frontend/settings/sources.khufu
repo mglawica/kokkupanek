@@ -1,4 +1,5 @@
 import {go} from 'khufu-routing'
+import {set, init, value} from '../value'
 
 
 style:
@@ -8,6 +9,8 @@ style:
     z-index: 1
   .strike
     text-decoration: line-through
+  .pointer
+    cursor: pointer
 
 
 view sources(router):
@@ -19,113 +22,120 @@ view sources(router):
     new_source(router)
 
 view new_source(router):
-  <h1>
-    "Adding a New Source "
-    <i.help.green.small.circle.icon.pointer>
+  <div>
+    store @global_help = value
+    store @slug_help = value
+    <h1>
+      "Adding a New Source "
+      <i.help.green.small.circle.icon.pointer.pointer>
+        link {click} set(not @global_help) -> @global_help
 
-  <div.ui.grid.container>
-    <div.four.wide.column>
-      <p.ui.piled.segment> "
-        A source should be though as an equivalent to a git/mercurial
-        repository, although it may include submodules or track forks too or
-        might be a part of a monorepo.
-      "
-    <div.four.wide.column>
-      <p.ui.piled.segment> "
-        More specifically it's a single directory in a cluster where you upload
-        container images.  Usually CI system does upload, so upload keys are
-        closely tied to a source.
-      "
-    <div.four.wide.column>
-      <p.ui.piled.segment> "
-        Multiple containers might be uploaded from a source and multiple
-        branches are tracked. We keep upgradable and downgradable versions
-        for each branch.
-      "
-    <div.four.wide.column>
-      <p.ui.piled.segment> "
-        You can compose deployment environments from multiple sources.
-        Each source having independent version of the code and tracking
-        a specific branch.
-      "
+    if @global_help:
+      <div.ui.grid.container>
+        <div.four.wide.column>
+          <p.ui.piled.segment.transition.jiggle> "
+            A source should be though as an equivalent to a git/mercurial
+            repository, although it may include submodules or track forks too or
+            might be a part of a monorepo.
+          "
+        <div.four.wide.column>
+          <p.ui.piled.segment.transition.jiggle> "
+            More specifically it's a single directory in a cluster where you upload
+            container images.  Usually CI system does upload, so upload keys are
+            closely tied to a source.
+          "
+        <div.four.wide.column>
+          <p.ui.piled.segment.transition.jiggle> "
+            Multiple containers might be uploaded from a source and multiple
+            branches are tracked. We keep upgradable and downgradable versions
+            for each branch.
+          "
+        <div.four.wide.column>
+          <p.ui.piled.segment.transition.jiggle> "
+            You can compose deployment environments from multiple sources.
+            Each source having independent version of the code and tracking
+            a specific branch.
+          "
 
 
-  <form.ui.form.grid.container>
-    <div.row>
-      <div.ui.field.six.wide.column>
-        <div.ui.icon.input.loading?(false)>
-          <input type="text" placeholder="Slug">
-          <i.check?(false).mark.icon>
-        <div class="ui pointing label">
-          "Alphanumerics and dash only. Do not shorten it too much. "
-          <i.green.circle.question.icon>
-      <div.ui.field.eight.wide.column>
-        <div.ui.piled.segment>
-          <p>
-            "A globally recognizable slug for your repository. "
-            "You will be able to upload image into: "
-          <pre.ui.green.segment>
-            "ciruela upload server:/code-your-slug/...\n"
-            "ciruela upload server:/assets-your-slug/...\n"
-          <p>
-            "Good idea: include a team in name: "
-            <code>
-              "crm-celery"
-            <br>
-            "Bad idea: include a branch or installation: "
-            <code.strike>
-              "ninja-staging"
-            <br>
-            "If name of the project is unique enough, it okay: "
-            <code>
-              "drunken-ninja"
-            <br>
-            "But not if it's a generic name like "
-            <code.strike>
-              "worker"
-            " or "
-            <code.strike>
-              "fileserver"
-    <div.row>
-      <div.wide.column>
-        <h2.ui.dividing.header> "Keys"
-    <div.row>
-      <div.ui.input.twelve.wide.column>
-        <input.mono type="text" placeholder="ssh-key ...">
-          //link {blur} update_if_empty(@comment_input)
-          //link {blur} add another row
-      <div.ui.input.four.wide.column>
-        <input.mono type="text" placeholder="Comment/Name">
-    <div.row>
-      <div.field.wide.column>
-        <button.ui.button.disabled> "Generate a New Key"
-        <div class="ui left pointing label">
-          "Not implemented yet"
-    <div.row>
-      <div.wide.column>
-        <h2.ui.dividing.header> "Servers"
-        <div.ui.divided.selection.list>
-          <div.item>
-            <div.ui.label.fixed-width> "Active"
-            <div.ui.basic.label> "alpha"
-            <div.ui.basic.label> "gamma"
-          <div.item>
-            <div.ui.label.fixed-width> "Backup"
-            <div.ui.basic.label> "beta"
-          <div.item>
-            <div.ui.label.fixed-width> "Max Allowed"
-            <div.ui.blue.label>
-              <i.large.plus.square.outline.icon>
-              "25 "
-              "servers"
-          <div.item>
-            <div.ui.label.fixed-width> "Assets"
-            <div.ui.basic.label> "sigma"
-            <div.ui.basic.label> "delta"
-        <div.field>
-          <button.ui.button.disabled> "Change Server Alignment"
+    <form.ui.form.grid.container>
+      <div.row>
+        <div.ui.field.six.wide.column>
+          <div.ui.icon.input.loading?(false)>
+            <input type="text" placeholder="Slug">
+            <i.check?(false).mark.icon>
+          <div class="ui pointing label">
+            "Alphanumerics and dash only. Do not shorten it too much. "
+            <i.green.circle.question.icon.pointer>
+              link {click} set(not @slug_help) -> @slug_help
+        if @slug_help:
+          <div.ui.field.eight.wide.column.transition.jiggle>
+            <div.ui.piled.segment>
+              <p>
+                "A globally recognizable slug for your repository. "
+                "You will be able to upload image into: "
+              <pre.ui.green.segment>
+                "ciruela upload server:/code-your-slug/...\n"
+                "ciruela upload server:/assets-your-slug/...\n"
+              <p>
+                "Good idea: include a team in name: "
+                <code>
+                  "crm-celery"
+                <br>
+                "Bad idea: include a branch or installation: "
+                <code.strike>
+                  "ninja-staging"
+                <br>
+                "If name of the project is unique enough, it okay: "
+                <code>
+                  "drunken-ninja"
+                <br>
+                "But not if it's a generic name like "
+                <code.strike>
+                  "worker"
+                " or "
+                <code.strike>
+                  "fileserver"
+      <div.row>
+        <div.wide.column>
+          <h2.ui.dividing.header> "Keys"
+      <div.row>
+        <div.ui.input.twelve.wide.column>
+          <input.mono type="text" placeholder="ssh-key ...">
+            //link {blur} update_if_empty(@comment_input)
+            //link {blur} add another row
+        <div.ui.input.four.wide.column>
+          <input.mono type="text" placeholder="Comment/Name">
+      <div.row>
+        <div.field.wide.column>
+          <button.ui.button.disabled> "Generate a New Key"
           <div class="ui left pointing label">
             "Not implemented yet"
-    <button.ui.large.primary.button>
-      "Save"
+      <div.row>
+        <div.wide.column>
+          <h2.ui.dividing.header> "Servers"
+          <div.ui.divided.selection.list>
+            <div.item>
+              <div.ui.label.fixed-width> "Active"
+              <div.ui.basic.label> "alpha"
+              <div.ui.basic.label> "gamma"
+            <div.item>
+              <div.ui.label.fixed-width> "Backup"
+              <div.ui.basic.label> "beta"
+            <div.item>
+              <div.ui.label.fixed-width> "Max Allowed"
+              <div.ui.blue.label>
+                <i.large.plus.square.outline.icon>
+                "25 "
+                "servers"
+            <div.item>
+              <div.ui.label.fixed-width> "Assets"
+              <div.ui.basic.label> "sigma"
+              <div.ui.basic.label> "delta"
+          <div.field>
+            <button.ui.button.disabled> "Change Server Alignment"
+            <div class="ui left pointing label">
+              "Not implemented yet"
+      <button.ui.large.primary.button>
+        "Save"
 
