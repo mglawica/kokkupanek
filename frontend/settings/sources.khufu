@@ -1,5 +1,7 @@
 import {go} from 'khufu-routing'
 import {set, init, value} from '../value'
+import {form} from '../form'
+import {pretty} from '../debug'
 
 
 style:
@@ -23,8 +25,11 @@ view sources(router):
 
 view new_source(router):
   <div>
+    store @form = form()
     store @global_help = value
     store @slug_help = value
+    <pre>
+      pretty(@form)
     <h1>
       "Adding a New Source "
       <i.help.green.small.circle.icon.pointer.pointer>
@@ -62,7 +67,9 @@ view new_source(router):
       <div.row>
         <div.ui.field.six.wide.column>
           <div.ui.icon.input.loading?(false)>
+            store @slug = form.field('slug',  '')
             <input type="text" placeholder="Slug">
+              link {input} set(this.value) -> @slug
             <i.check?(false).mark.icon>
           <div class="ui pointing label">
             "Alphanumerics and dash only. Do not shorten it too much. "
