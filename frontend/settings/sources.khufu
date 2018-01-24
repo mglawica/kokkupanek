@@ -37,7 +37,7 @@ view new_source(router):
         link {click} set(not @global_help) -> @global_help
 
     if @global_help:
-      <div.ui.grid.container>
+      <div.ui.stackable.grid.container>
         <div.four.wide.column>
           <p.ui.piled.segment.transition.jiggle> "
             A source should be though as an equivalent to a git/mercurial
@@ -64,7 +64,7 @@ view new_source(router):
           "
 
 
-    <form.ui.form.grid.container>
+    <form.ui.form.stackable.grid.container>
       store @slug = form.field('slug',  '')
       <div.row>
         <div.ui.field.six.wide.column>
