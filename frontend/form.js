@@ -17,7 +17,6 @@ export class Form {
         for(var k in this._fields) {
             r[k] = this._fields[k].getState()
         }
-        console.log("FIELDS", this._fields, r)
         return r
     }
     dispatch(action) {
@@ -27,7 +26,6 @@ export class Form {
         }
     }
     subscribe(callback) {
-        console.error("SUBFORM")
         this._listeners.push(callback)
         return function() {
             let idx = this._listeners.indexOf(callback);
@@ -63,7 +61,6 @@ export class Field {
         return this._value
     }
     subscribe(callback) {
-        console.log("SUBFIELD")
         return this._form.subscribe(callback)
     }
     dispatch(action) {

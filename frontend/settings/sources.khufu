@@ -2,6 +2,7 @@ import {go} from 'khufu-routing'
 import {set, init, value} from '../value'
 import {form} from '../form'
 import {pretty} from '../debug'
+import {is_valid_slug} from '../validators'
 
 
 style:
@@ -64,15 +65,16 @@ view new_source(router):
 
 
     <form.ui.form.grid.container>
+      store @slug = form.field('slug',  '')
       <div.row>
         <div.ui.field.six.wide.column>
           <div.ui.icon.input.loading?(false)>
-            store @slug = form.field('slug',  '')
-            <input type="text" placeholder="Slug">
+            <input type="text" placeholder="Slug" id=slug.id>
               link {input} set(this.value) -> @slug
             <i.check?(false).mark.icon>
           <div class="ui pointing label">
-            "Alphanumerics and dash only. Do not shorten it too much. "
+            <label for=slug.id>
+              "Lowercase alphanumerics and dash only. Not too short. "
             <i.green.circle.question.icon.pointer>
               link {click} set(not @slug_help) -> @slug_help
         if @slug_help:
@@ -81,9 +83,24 @@ view new_source(router):
               <p>
                 "A globally recognizable slug for your repository. "
                 "You will be able to upload image into: "
-              <pre.ui.green.segment>
-                "ciruela upload server:/code-your-slug/...\n"
-                "ciruela upload server:/assets-your-slug/...\n"
+              if not @slug:
+                <pre.ui.green.segment>
+                  `ciruela upload server:/code-your-slug/...\n`
+                  `ciruela upload server:/assets-your-slug/...\n`
+              elif is_valid_slug(@slug):
+                <pre.ui.green.segment>
+                  `ciruela upload server:/code-${@slug}/...\n`
+                  `ciruela upload server:/assets-${@slug}/...\n`
+              else:
+                <pre.ui.red.segment>
+                  `ciruela upload server:/code-`
+                  <span.ui.label.red>
+                    "doesn't fit here"
+                  `/...\n`
+                  `ciruela upload server:/assets-`
+                  <span.ui.label.red>
+                    "doesn't fit here"
+                  `/...\n`
               <p>
                 "Good idea: include a team in name: "
                 <code>
