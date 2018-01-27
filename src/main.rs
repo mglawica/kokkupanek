@@ -1,3 +1,4 @@
+#[macro_use] extern crate log;
 #[macro_use] extern crate serde_json;
 
 use std::mem;
@@ -7,8 +8,12 @@ use std::os::raw::{c_void};
 
 use serde_json::{Value, from_slice, to_vec};
 
+mod logger;
+
 
 fn main() {
+    logger::init();
+    log::set_max_level(log::LevelFilter::Debug);
 }
 
 #[no_mangle]
@@ -41,7 +46,11 @@ fn _scheduler_wrapper(data: &[u8]) -> Vec<u8> {
 }
 
 fn _scheduler_inner(_input: Value) -> (Value, String) {
-    return (json!({}), "Scheduler works!".into())
+    let logger = logger::SchedulerLogger::context();
+    info!("Scheduler works!");
+    let schedule = json!({});
+    let mut out = logger.into_inner();
+    return (schedule, out);
 }
 
 // In order to work with the memory we expose (de)allocation methods

@@ -7,3 +7,4 @@ version = "0.1.0"
 
 [dependencies]
 serde_json = "1.0.0"
+log = "0.4.1"
