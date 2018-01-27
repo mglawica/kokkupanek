@@ -1,6 +1,6 @@
 import {go} from 'khufu-routing'
 import {set, init, value} from '../value'
-import {form} from '../form'
+import {form, set_field} from '../form'
 import {pretty} from '../debug'
 import {is_valid_slug} from '../validators'
 
@@ -66,6 +66,7 @@ view new_source(router):
 
     <form.ui.form.stackable.grid.container>
       store @slug = form.field('slug',  '')
+      store @keys = form.list_field('keys', [{'key': '', comment: ''}])
       <div.row>
         <div.ui.field.six.wide.column>
           <div.ui.icon.input.loading?(false)>
@@ -123,13 +124,15 @@ view new_source(router):
       <div.row>
         <div.wide.column>
           <h2.ui.dividing.header> "Keys"
-      <div.row>
-        <div.ui.input.twelve.wide.column>
-          <input.mono type="text" placeholder="ssh-key ...">
-            //link {blur} update_if_empty(@comment_input)
-            //link {blur} add another row
-        <div.ui.input.four.wide.column>
-          <input.mono type="text" placeholder="Comment/Name">
+      for [id, field] of keys.items() key id:
+        <div.row>
+          pretty(@field)
+          <div.ui.input.twelve.wide.column>
+            <input.mono type="text" value=@field.key placeholder="ssh-key ...">
+              link {input} set_field('key', this.value) -> @field
+          <div.ui.input.four.wide.column>
+            <input.mono type="text" value=@field.comment placeholder="Comment/Name">
+              link {input} set_field('comment', this.value) -> @field
       <div.row>
         <div.field.wide.column>
           <button.ui.button.disabled> "Generate a New Key"
