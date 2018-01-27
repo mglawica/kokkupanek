@@ -123,10 +123,11 @@ view new_source(router):
                   "fileserver"
       <div.row>
         <div.wide.column>
-          <h2.ui.dividing.header> "Keys"
+          <div.ui.horizontal.divider.header>
+            <i.icon.key>
+            "Keys"
       for [id, field] of keys.items() key id:
         <div.row>
-          pretty(@field)
           <div.ui.input.twelve.wide.column>
             <input.mono type="text" value=@field.key placeholder="ssh-key ...">
               link {input} set_field('key', this.value) -> @field
@@ -140,7 +141,9 @@ view new_source(router):
             "Not implemented yet"
       <div.row>
         <div.wide.column>
-          <h2.ui.dividing.header> "Servers"
+          <div.ui.horizontal.divider.header>
+            <i.icon.server>
+            "Servers"
           <div.ui.divided.selection.list>
             <div.item>
               <div.ui.label.fixed-width> "Active"
@@ -163,6 +166,7 @@ view new_source(router):
             <button.ui.button.disabled> "Change Server Alignment"
             <div class="ui left pointing label">
               "Not implemented yet"
-      <button.ui.large.primary.button>
-        "Save"
+      <div.ui.horizontal.divider>
+        <button.ui.large.primary.button>
+          "Save"
 
