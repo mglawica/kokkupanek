@@ -144,22 +144,22 @@ view new_source(router):
           <div.ui.horizontal.divider.header>
             <i.icon.server>
             "Servers"
-          <div.ui.divided.selection.list>
-            <div.item>
-              <div.ui.label.fixed-width> "Active"
+          <div.ui.raised.segments style="position: relative">
+            <div.ui.segment>
+              <div.ui.left.ribbon.label.green> "Active"
               <div.ui.basic.label> "alpha"
               <div.ui.basic.label> "gamma"
-            <div.item>
-              <div.ui.label.fixed-width> "Backup"
+            <div.ui.segment>
+              <div.ui.left.ribbon.label.yellow> "Backup"
               <div.ui.basic.label> "beta"
-            <div.item>
-              <div.ui.label.fixed-width> "Max Allowed"
+            <div.ui.segment>
+              <div.ui.left.ribbon.label.teal> "Max Allowed"
               <div.ui.blue.label>
                 <i.large.plus.square.outline.icon>
                 "25 "
                 "servers"
-            <div.item>
-              <div.ui.label.fixed-width> "Assets"
+            <div.ui.segment>
+              <div.ui.left.ribbon.label.blue> "Assets"
               <div.ui.basic.label> "sigma"
               <div.ui.basic.label> "delta"
           <div.field>
