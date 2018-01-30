@@ -1,8 +1,9 @@
 import {go} from 'khufu-routing'
 import {set, init, value} from '../value'
-import {form, set_field} from '../form'
+import {form, field} from '../form'
 import {pretty} from '../debug'
 import {is_valid_slug} from '../validators'
+import {keep_empty_line, check, extract_comment} from './sources'
 
 
 style:
@@ -65,8 +66,8 @@ view new_source(router):
 
 
     <form.ui.form.stackable.grid.container>
-      store @slug = form.field('slug',  '')
-      store @keys = form.list_field('keys', [])
+      store @slug = field(form, 'slug',  '')
+      store @keys = field(form, 'keys', []) | keep_empty_line
       <div.row>
         <div.ui.field.six.wide.column>
           <div.ui.icon.input.loading?(false)>
@@ -126,15 +127,17 @@ view new_source(router):
           <div.ui.horizontal.divider.header>
             <i.icon.key>
             "Keys"
-      for [id, field] of keys.items() key id:
+      for [id, single_key] of keys.items() key id:
         <div.row>
           <div.ui.input.twelve.wide.column>
-            store @key = field.field('key', '')
-            <input.mono type="text" value=@field.key placeholder="ssh-key ...">
+            store @key = field(single_key, 'key', '')
+            <input.mono type="text" value=@single_key.key placeholder="ssh-key ...">
               link {input} set(this.value) -> @key
+              link {input} extract_comment(this.value) -> @single_key
+              link {input} check() -> @keys
           <div.ui.input.four.wide.column>
-            store @comment = field.field('comment', '')
-            <input.mono type="text" value=@field.comment placeholder="Comment/Name">
+            store @comment = field(single_key, 'comment', '')
+            <input.mono type="text" value=@single_key.comment placeholder="Comment/Name">
               link {input} set(this.value) -> @comment
       <div.row>
         <div.field.wide.column>

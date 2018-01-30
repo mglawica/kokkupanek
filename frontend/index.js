@@ -8,15 +8,16 @@ let router = new Router(window);
 let khufu_instance = attach(document.getElementById('app'),
     main(router, VERSION), {
     store(reducer, middleware, state) {
-        if(typeof reducer != 'function') {
-            return reducer
-        }
         let mid = middleware.filter(x => typeof x === 'function')
         if(DEBUG) {
             let logger = require('redux-logger')
             mid.push(logger.createLogger({
                 collapsed: true,
             }))
+        }
+        if(typeof reducer != 'function') {
+            // already created store, just adding middleware
+            return applyMiddleware(...mid)(_ => reducer)()
         }
         let store = createStore(reducer, state, applyMiddleware(...mid))
         for(var m of middleware) {
