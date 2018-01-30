@@ -66,7 +66,7 @@ view new_source(router):
 
     <form.ui.form.stackable.grid.container>
       store @slug = form.field('slug',  '')
-      store @keys = form.list_field('keys', [{'key': '', comment: ''}])
+      store @keys = form.list_field('keys', [])
       <div.row>
         <div.ui.field.six.wide.column>
           <div.ui.icon.input.loading?(false)>
@@ -129,11 +129,13 @@ view new_source(router):
       for [id, field] of keys.items() key id:
         <div.row>
           <div.ui.input.twelve.wide.column>
+            store @key = field.field('key', '')
             <input.mono type="text" value=@field.key placeholder="ssh-key ...">
-              link {input} set_field('key', this.value) -> @field
+              link {input} set(this.value) -> @key
           <div.ui.input.four.wide.column>
+            store @comment = field.field('comment', '')
             <input.mono type="text" value=@field.comment placeholder="Comment/Name">
-              link {input} set_field('comment', this.value) -> @field
+              link {input} set(this.value) -> @comment
       <div.row>
         <div.field.wide.column>
           <button.ui.button.disabled> "Generate a New Key"

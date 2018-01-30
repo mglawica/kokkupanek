@@ -59,12 +59,31 @@ export class Field {
         this._owner = owner
         this._form = owner._form
         this._value = default_value
-        this._subfields = []
+        this._fields = new Map()
         this.id = 'field_' + (GLOBAL_COUNTER += 1)
         owner._add_field(name || this.id, this)
     }
+    field(name, default_value) {
+        return new Field(this, name, default_value)
+    }
+    _add_field(name, field) {
+        this._fields.set(name, field)
+    }
+    _remove_field(name, field) {
+        if(this._fields.get(name, field)) {
+            this._fields.delete(name)
+        }
+    }
     getState() {
-        return this._value
+        if(this._fields.size > 0) {
+            let r = {}
+            for(let [k, v] of this._fields.entries()) {
+                r[k] = v.getState()
+            }
+            return r
+        } else {
+            return this._value
+        }
     }
     subscribe(callback) {
         return this._form.subscribe(callback)
@@ -90,11 +109,12 @@ export class ListField extends Field {
         super(owner, name, default_value)
         this._fields = new Map()
         default_value.forEach((x, i) => new Field(this, null, x))
+        if(this._fields.size == 0) {
+            new Field(this, null, null)
+        }
     }
     getState() {
-        console.log("VALUES", Array.from(this._fields.values()))
-        return Array.prototype.map.call(
-            this._fields.values(), x => x.getState())
+        return Array.from(this._fields.values()).map(x => x.getState())
     }
     items() {
         return this._fields.entries()
@@ -111,8 +131,4 @@ export class ListField extends Field {
 
 export function form() {
     return new Form()
-}
-
-export function set_field(key, value) {
-    return {action: 'set_field', key, value}
 }
