@@ -92,7 +92,7 @@ commands:
     run: |
       cargo build --target=wasm32-unknown-unknown --release
       wasm-gc \
-        target/wasm32-unknown-unknown/release/kokkupanek-scheduler.wasm \
+        target/wasm32-unknown-unknown/release/scheduler.wasm \
         scheduler/v1/scheduler.wasm
 
   run: !Supervise

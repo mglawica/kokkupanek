@@ -1,4 +1,5 @@
 #[macro_use] extern crate log;
+#[macro_use] extern crate kokkupanek as kk;
 #[macro_use] extern crate serde_json;
 
 use std::mem;
@@ -7,8 +8,8 @@ use std::fmt::Write;
 use std::os::raw::{c_void};
 
 use serde_json::{Value, from_slice, to_vec};
+use kk::logger;
 
-mod logger;
 
 
 fn main() {

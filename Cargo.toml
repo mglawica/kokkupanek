@@ -1,5 +1,5 @@
 [package]
-name = "kokkupanek-scheduler"
+name = "kokkupanek"
 description = """
     Another scheduler based on wasm
 """
