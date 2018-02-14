@@ -1,15 +1,16 @@
 Kokkupanek
 ==========
 
-:Status: PoC
+**Status: Proof-of-Concept**
 
-A library that contains set of tools for writing verwalter_ schedulers
-(in web assembly).
+A library that contains set of tools for writing [verwalter] schedulers
+(in web assembly), a successor for [verwalter-toolbox].
 
 The goal is also to include a demo scheduler for dokku-style cluster.
 
 
-.. _verwalter: http://verwalter.readthedocs.io
+[verwalter]: http://verwalter.readthedocs.io
+[verwalter-toolbox]: https://github.com/tailhook/verwalter-toolbox/
 
 
 A Name
