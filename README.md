@@ -1,10 +1,12 @@
-==========
 Kokkupanek
 ==========
 
-:Status: Alpha
+:Status: PoC
 
-A verwalter_ scheduler (written in web assembly) and a respective frontend.
+A library that contains set of tools for writing verwalter_ schedulers
+(in web assembly).
+
+The goal is also to include a demo scheduler for dokku-style cluster.
 
 
 .. _verwalter: http://verwalter.readthedocs.io
@@ -18,7 +20,6 @@ it translates to that word in at least one meaning). So scheduler in
 Webassembly named like that.
 
 
-=======
 License
 =======
 
@@ -29,7 +30,6 @@ Licensed under either of
 
 at your option.
 
-------------
 Contribution
 ------------
 
