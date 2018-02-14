@@ -1,6 +1,8 @@
 use std::cell::RefCell;
+use std::panic::set_hook;
 
 use log::{self, Record, Level, Metadata};
+
 
 static mut LOGGER: GlobalLogger = GlobalLogger {
     cur: None,
@@ -20,6 +22,12 @@ struct Logger {
 
 pub struct SchedulerLogger;
 pub struct Sublogger(usize);
+
+extern {
+    fn log_panic(payload_ptr: *const u8, payload_len: usize,
+                        file_ptr: *const u8, file_len: usize, line: u32);
+}
+
 
 impl SchedulerLogger {
     pub fn context() -> SchedulerLogger {
@@ -106,4 +114,24 @@ pub fn init() {
     unsafe {
         log::set_logger(&LOGGER).expect("log init ok");
     }
+    set_hook(Box::new(|panic_info| {
+        let payload = panic_info.payload();
+        let (ptr, len) = if let Some(s) = payload.downcast_ref::<&str>() {
+            (s.as_bytes().as_ptr(), s.len())
+        } else if let Some(s) = payload.downcast_ref::<String>() {
+            (s.as_bytes().as_ptr(), s.len())
+        } else {
+            (0 as *const u8, 0)
+        };
+        let (file_ptr, file_len, line) = match panic_info.location() {
+            Some(loc) => {
+                let file = loc.file().as_bytes();
+                (file.as_ptr(), file.len(), loc.line())
+            }
+            None => (0 as *const u8, 0, 0),
+        };
+        unsafe {
+            log_panic(ptr, len, file_ptr, file_len, line);
+        }
+    }));
 }
