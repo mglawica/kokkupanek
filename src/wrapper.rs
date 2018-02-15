@@ -9,12 +9,14 @@ use serde_json::Value as Json;
 use serde_json::{from_slice, to_vec};
 
 use logger;
+use input;
+use timestamp;
 
 
 pub unsafe fn scheduler<F, I, R, E>(ptr: *const u8, len: usize, f: F) -> *mut c_void
     where F: FnOnce(I) -> Result<R, E>,
           E: fmt::Display,
-          I: DeserializeOwned,
+          I: DeserializeOwned + input::Input,
           R: Serialize,
 {
     let input = slice::from_raw_parts(ptr, len);
@@ -27,7 +29,7 @@ pub unsafe fn scheduler<F, I, R, E>(ptr: *const u8, len: usize, f: F) -> *mut c_
 fn serde_wrapper<'x, F, I, R, E>(data: &'x [u8], f: F) -> Vec<u8>
     where F: FnOnce(I) -> Result<R, E>,
           E: fmt::Display,
-          I: DeserializeOwned,
+          I: DeserializeOwned + input::Input,
           R: Serialize,
 {
     let input = match from_slice(data) {
@@ -55,8 +57,10 @@ fn serde_wrapper<'x, F, I, R, E>(data: &'x [u8], f: F) -> Vec<u8>
 fn logging_wrapper<F, I, R, E>(input: I, f: F) -> (Result<R, ()>, String)
     where F: FnOnce(I) -> Result<R, E>,
           E: fmt::Display,
+          I: input::Input,
 {
     let logger = logger::SchedulerLogger::context();
+    let _timestamp = timestamp::with_timestamp(input.now());
     match f(input) {
         Ok(schedule) => {
             let mut out = logger.into_inner();
