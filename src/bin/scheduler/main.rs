@@ -20,7 +20,8 @@ fn main() {
 pub extern "C" fn scheduler(ptr: *const u8, len: usize) -> *mut c_void {
     unsafe {
         wrapper::scheduler(ptr, len,
-            |input: GenericInput<(), (), ()>| -> Result<Value, String> {
+            |input: GenericInput<Value, Value, Value>| -> Result<Value, String>
+            {
                 info!("Scheduler works!");
                 let schedule = json!({});
                 return Ok(schedule);
