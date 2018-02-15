@@ -114,6 +114,7 @@ pub fn init() {
     unsafe {
         log::set_logger(&LOGGER).expect("log init ok");
     }
+    log::set_max_level(log::LevelFilter::Debug);
     set_hook(Box::new(|panic_info| {
         let payload = panic_info.payload();
         let (ptr, len) = if let Some(s) = payload.downcast_ref::<&str>() {
