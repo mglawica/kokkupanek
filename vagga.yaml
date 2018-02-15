@@ -119,3 +119,9 @@ commands:
         - --hostname=alpha
         - --debug-force-leader
         - --dry-run
+
+  check: !Command
+    description: Run cargo check (with wasm32 target)
+    container: wasm
+    symlink-name: cargo
+    run: [cargo, check, --target=wasm32-unknown-unknown]
