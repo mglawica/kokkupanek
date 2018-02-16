@@ -32,6 +32,12 @@ impl<K: Ord, V> Map<K, V> {
     pub fn insert(&mut self, k: K, v: V) {
         self.0.insert(k, v);
     }
+    pub fn get(&mut self, k: &K) -> Option<&V> {
+        self.0.get(k)
+    }
+    pub fn get_mut(&mut self, k: &K) -> Option<&mut V> {
+        self.0.get_mut(k)
+    }
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
