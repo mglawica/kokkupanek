@@ -41,6 +41,9 @@ impl<K: Ord, V> Map<K, V> {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+    pub fn merge(&mut self, other: Self) {
+        unimplemented!();
+    }
 }
 
 impl<K: Ord, V> Default for Map<K, V> {

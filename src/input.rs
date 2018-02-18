@@ -33,3 +33,18 @@ impl<A, S, R> Input for GenericInput<A, S, R> {
         self.now
     }
 }
+
+pub trait Schedule {
+    fn new() -> Self;
+    fn merge(&mut self, other: Self);
+    fn from_parents<I>(parents: I) -> Self
+        where I: IntoIterator<Item=Self>,
+              Self: Sized,
+    {
+        let mut s = Self::new();
+        for next in parents.into_iter() {
+            s.merge(next);
+        }
+        return s;
+    }
+}
