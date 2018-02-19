@@ -105,7 +105,7 @@ commands:
       cantal: !Command
         container: imitation
         run: |
-          exec fake-cantal --peers "alpha"
+          exec fake-cantal --peers "localhost"
       verw: !Command
         container: imitation
         environ:
@@ -116,7 +116,7 @@ commands:
         - --storage-dir=/work/tmp/vw
         - --log-dir=/tmp/logs
         - --override-machine-id=deadbeef01
-        - --hostname=alpha
+        - --hostname=localhost
         - --debug-force-leader
         - --dry-run
 
