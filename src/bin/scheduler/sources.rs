@@ -1,8 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::cmp::max;
 
 use juniper::{Executor, FieldError};
 
-use kk::lwwset::{self, Timestamped};
+use kk::lwwset::{self, Mergeable};
 use kk::timestamp::Timestamp;
 
 use graph::{Context, Okay};
@@ -162,8 +163,25 @@ pub fn add_deployment(executor: &Executor<Context>,
 }
 
 
-impl Timestamped for Source {
+impl Mergeable for Source {
     fn timestamp(&self) -> Timestamp {
         self.timestamp
+    }
+    fn merge(&mut self, other: Source) {
+        self.timestamp = max(self.timestamp, other.timestamp);
+        self.keys.merge(other.keys);
+        self.deployments.extend(other.deployments.into_iter());
+        self.images.extend(other.images.into_iter());
+    }
+}
+
+impl Mergeable for KeyMeta {
+    fn timestamp(&self) -> Timestamp {
+        self.timestamp
+    }
+    fn merge(&mut self, other: KeyMeta) {
+        if other.timestamp > self.timestamp {
+            *self = other;
+        }
     }
 }
