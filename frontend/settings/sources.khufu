@@ -1,9 +1,11 @@
 import {go} from 'khufu-routing'
 import {set, init, value} from '../value'
-import {form, field} from '../form'
-import {pretty} from '../debug'
+import {form, field, submit} from '../form'
 import {is_valid_slug} from '../validators'
 import {keep_empty_line, check, extract_comment} from './sources'
+import {entries} from '../iter'
+import {pick, json, refresher} from '../request'
+import {graphql_action} from '../graphql'
 
 
 style:
@@ -19,19 +21,32 @@ style:
 
 view sources(router):
   if router.at():
-    <button.ui.button>
-      link {click} go('new') -> @router
-      "New Source"
-  else:
+    <div>
+      store @schedule = pick('data') | refresher | json('/v1/schedule')
+      if @schedule:
+        <table.ui.very.basic.selectable.celled.table>
+          <tbody>
+            for [slug, source] of entries(@schedule.sources) key slug:
+              <tr>
+                <td>
+                  <i.code.big.icon>
+                  slug
+    <div.ui.basic.segment>
+      <button.ui.button>
+        link {click} go('new') -> @router
+        "New Source"
+  elif router.at('new'):
     new_source(router)
 
 view new_source(router):
   <div>
-    store @form = form()
+    store @form = form() | graphql_action(`
+      mutation CreateSource($slug: String!, $keys: [Key!]!) {
+        createSource(slug: $slug, keys: $keys) { ok }
+      }
+    `)
     store @global_help = value
     store @slug_help = value
-    <pre>
-      pretty(@form)
     <h1>
       "Adding a New Source "
       <i.help.green.small.circle.icon.pointer.pointer>
@@ -172,6 +187,7 @@ view new_source(router):
             <div class="ui left pointing label">
               "Not implemented yet"
       <div.ui.horizontal.divider>
-        <button.ui.large.primary.button>
+        <button.ui.large.primary.button type="button">
+          link {click} submit(event) -> @form
           "Save"
 

@@ -21,9 +21,39 @@ view settings(router):
     if sub.at():
       <div.active.section> "Sources"
     else:
-      <a.section> "Sources"
+      <a.section href=sub.rel('')>
+        link {click} go(event) -> @sub
+        "Sources"
       if sub.at('new'):
         <i.chevron.right.icon.divider>
         <div.active.section>
           "New Source"
-  else:
+  elif let sub = router.at('projects'):
+    if sub.at():
+      <div.active.section> "Projects"
+    else:
+      <a.section href=sub.rel('')>
+        link {click} go(event) -> @sub
+        "Projects"
+      if sub.at('new'):
+        <i.chevron.right.icon.divider>
+        <div.active.section>
+          "New Project"
+      elif let [name, sub] = sub.value():
+        if sub.at():
+          <i.chevron.right.icon.divider>
+          <div.active.section>
+            name
+        else:
+          <i.chevron.right.icon.divider>
+          <a.section href=sub.rel('')>
+            link {click} go(event) -> @sub
+            name
+          if sub.at("new_group"):
+            <i.chevron.right.icon.divider>
+            <div.active.section>
+              "New Group"
+          elif let [name, sub] = sub.value():
+            <i.chevron.right.icon.divider>
+            <div.active.section>
+              name

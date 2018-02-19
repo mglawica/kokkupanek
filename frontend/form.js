@@ -48,6 +48,7 @@ export function field(owner, name, default_value) {
         form = owner
     }
     let store = {
+        id,
         _form: form,
         _add_field(name, field) {
             fields.set(name, field)
@@ -131,4 +132,9 @@ export function input(val) {
 
 export function set_default(val) {
     return { type: 'set_default', value: val }
+}
+
+export function submit(event) {
+    event.preventDefault()
+    return { type: 'submit' }
 }

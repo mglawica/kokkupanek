@@ -18,6 +18,8 @@ mod action;
 mod sources;
 mod graph;
 mod schedule;
+mod projects;
+mod services;
 
 pub use schedule::Schedule;
 

@@ -1,0 +1,269 @@
+import {set, init, value} from '../value'
+import {form, field, submit} from '../form'
+import {graphql_action} from '../graphql'
+import {pretty} from '../debug'
+import {parse_int} from '../validators'
+import {entries, first_key} from '../iter'
+import {go} from 'khufu-routing'
+import {pick, json, refresher} from '../request'
+import {all_daemons, process_info} from './deploy'
+
+
+view group_settings(router, project, group):
+  if router.at():
+    group_view(router, project, group)
+  elif router.at('new_service'):
+    new_service(router, project, group)
+
+
+view group_view(router, project, group):
+  <div.ui.grid.container>
+    store @schedule = pick('data') | refresher | json('/v1/schedule')
+    if @schedule:
+      let proj = @schedule.projects[project]
+      let grp = proj.groups[group]
+      <div.row>
+        <h1.ui.header>
+          proj.title or project
+          "'s "
+          grp.title or group
+          if not grp.services:
+            <div.ui.label.right.ribbon.gray>
+              "No services defined"
+      <div.row>
+        for [sname, service] of entries(grp.services) key sname:
+          <div.four.wide.column>
+            <div.ui.card style="min-height: 100px">
+              <div.content>
+                <div.header>
+                  sname or '-- unknown --'
+                <div.content>
+                  <div.ui.ribbon.label>
+                    service.version
+                  <div.ui.statistic>
+                    <div.value>
+                      service.instances
+                    <div.label>
+                      "instances"
+      <div.row>
+        <div.ui.basic.segment>
+          <button.ui.button>
+            link {click} go('new_service') -> @router
+            "New Service"
+
+
+view new_service(router, project, group):
+  <div>
+    store @form = form() | graphql_action(`
+      mutation CreateService(
+        $project: String!
+        $group: String!
+        $service: NewService!
+      ) {
+        createService(project: $project, group: $group, service: $service) { ok }
+      }
+    `, {'project': project, 'group': group}, 'service')
+    store @schedule = pick('data') | refresher | json('/v1/schedule')
+    store @global_help = value
+    store @slug_help = value
+    <h1.ui.header>
+      "New Service"
+      <i.help.green.circle.icon.pointer.pointer>
+        link {click} set(not @global_help) -> @global_help
+    <pre>
+      pretty(@form)
+
+    <form.ui.stackable.grid.container>
+      let sources = @schedule and @schedule.sources
+      store @source = field(form, 'source', '')
+      store @process = field(form, 'process', '')
+      store @slug = field(form, 'slug',  '')
+      store @version = field(form, 'version', '')
+      store @instances = field(form, 'instances',  1)
+      let src = sources and sources[@source]
+      let daemons = src and all_daemons(src)
+
+      if @global_help:
+        <div.four.wide.column>
+          <p.ui.piled.segment.transition.jiggle> "
+            Service is a set of processes of the same version and same
+            parameters. You can run many set of equal instances of service.
+          "
+        <div.four.wide.column>
+          <p.ui.piled.segment.transition.jiggle> "
+            Initially service configured as a lithos daemon and put into
+            a container. Containers are synced to cluster using ciruela.
+          "
+        <div.four.wide.column>
+          <p.ui.piled.segment.transition.jiggle>
+            "As part of deployment process set of container names/hashes are
+             registered as a version "
+            <b>
+              first_key(src and src.versions) or "v1.2.3"
+            " of the source repository"
+
+      <div.row>
+        <div.ui.steps>
+          <div.step.active?(not @source)>
+            <i.code.icon>
+            <div.content>
+              <div.title>
+                "Select Source"
+          <div.step.active?(@source and not (@process and @version))>
+            <i.cube.icon>
+            <div.content>
+              <div.title>
+                "Choose Process"
+              <div.description>
+                "A stick version or track branch"
+          <div.step.active?(@source and @process and @version)>
+            <i.options.icon>
+            <div.content>
+              <div.title>
+                "Configure Variables"
+      <div.row>
+        store @sources_open = value
+        <div.ui.field.six.wide.column>
+          <div.ui.selection.dropdown
+              .error?(not sources)
+              .active?(@sources_open).visible?(@sources_open)
+              style={'width': '24em'}
+            >
+            link {click} set(not @sources_open) -> @sources_open
+            <i.dropdown.icon>
+            <div.text.default?(not @source)>
+              if @source:
+                if src.title:
+                  src.title
+                  <span.default>
+                    ` (${ @source })`
+                else:
+                  @source
+              else:
+                "Source"
+            <div.menu.transition.visible?(@sources_open)>
+              if not sources:
+                <div.ui.message>
+                  <div.header> "No sources defined"
+                  <p>
+                    <a href=router.rel("/settings/sources/new")>
+                      link {click} go(event) -> @router
+                      "Add Source"
+              else:
+                for [name, src] of entries(@schedule.sources) key name:
+                  <div.item>
+                    link {click} set(name) -> @source
+                    if src.title:
+                      src.title
+                      <span.label>
+                        ` (${ name })`
+                    else:
+                      name
+      if not src:
+      elif not daemons or not src.deployments:
+        <div.row>
+          <div.ui.error.message.visible>
+            <div.header>
+              `Source ${ @source } has no deployments`
+            <p>
+              "Please push some containers. "
+              "In properly configured projects it looks like:"
+              <pre>
+                `vagga deploy -d ${ group }`
+      else:
+        <div.row>
+          store @processes_open = value
+          store @versions_open = value
+          let ver_info = src.deployments[@version]
+          <div.ui.field.six.wide.column>
+            <div.ui.selection.dropdown
+                .error?(not sources)
+                .active?(@processes_open).visible?(@processes_open)
+              style={'width': '24em'}
+              >
+              link {click} set(not @processes_open) -> @processes_open
+              <i.dropdown.icon>
+              <div.text.default?(not @process)>
+                @process or "Process"
+              <div.menu.transition.visible?(@processes_open)>
+                for [dname, daemon_info] of entries(daemons) key dname:
+                  <div.item>
+                    link {click} set(dname) -> @process
+                    link {click} set(dname) -> @slug
+                    dname
+                    <code>
+                      ` (${ daemon_info.config })`
+
+          <div.ui.field.six.wide.column>
+            <div.ui.selection.dropdown
+                .error?(not sources)
+                .active?(@versions_open).visible?(@versions_open)
+              style={'width': '24em'}
+              >
+              link {click} set(not @versions_open) -> @versions_open
+              <i.dropdown.icon>
+              <div.text.default?(not @version)>
+                @version or "Version"
+              <div.menu.transition.visible?(@versions_open)>
+                for [ver, ver_info] of entries(src.deployments) key ver:
+                  <div.item>
+                    link {click} set(ver) -> @version
+                    ver
+                    <span.text>
+                      ` (${ ver_info.branch or '' } / ${ ver_info.timestamp })`
+            if @version and ver_info.branch:
+              <div.ui.checkbox>
+                let @branch = field(form, 'branch', null)
+                <input name="example" type="checkbox" id=branch.id>
+                  link {click} set(this.value ? ver_info.branch : null) -> @branch
+                <label for=branch.id>
+                  "track branch "
+                  <b>
+                    ver_info.branch
+
+      let pro = process_info(src, @process, @version)
+      if pro:
+        <div.row>
+          <div.ui.field.four.wide.column>
+            <div.ui.input>
+              <input type="number" value=1 min=1 id=instances.id>
+                link {input} set(parse_int(this.value)) -> @instances
+            <div.ui.pointing.label>
+              <label for=instances.id>
+                "Number of instances to start"
+
+        if not pro.variables:
+          <div.row>
+            <div.ui.icon.success.message>
+              <i.check.icon>
+              <div.content.large>
+                "No variables defined. You're all set!"
+        else:
+          <div.ui.message.error>
+            <div.header>
+              "Variables aren't suported yet"
+
+      <div.row>
+        <div.ui.field.six.wide.column>
+          <div.ui.icon.input.loading?(false)>
+            <input type="text" placeholder="Slug" value=@slug id=slug.id>
+              link {input} set(this.value) -> @slug
+            <i.check?(false).mark.icon>
+          <div.ui.pointing.label>
+            <label for=slug.id>
+              "Slug is generated automatically, but you can override. "
+            <i.green.circle.question.icon.pointer>
+              link {click} set(not @slug_help) -> @slug_help
+        if @slug_help:
+          <div.ui.field.eight.wide.column.transition.jiggle>
+            <div.ui.piled.segment>
+              <p> "
+                This is used as a process name (i.e. you can filter metrics
+                by this name).
+              "
+
+
+      <div.ui.horizontal.divider>
+        <button.ui.large.primary.button.disabled?(not pro) type="button">
+          link {click} submit(event) -> @form
+          "Create"

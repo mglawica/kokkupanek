@@ -1,0 +1,214 @@
+import {set, init, value} from '../value'
+import {form, field, submit} from '../form'
+import {go} from 'khufu-routing'
+import {pretty} from '../debug'
+import {graphql_action} from '../graphql'
+import {pick, json, refresher} from '../request'
+import {entries, entry_list} from '../iter'
+import {group_settings} from './group.khufu'
+
+
+style:
+  .pointer
+    cursor: pointer
+
+
+view projects(router):
+  if router.at():
+    <div.ui.grid.container>
+      <div.row>
+        <h1.ui.header> "Projects"
+      <div.row>
+        store @schedule = pick('data') | refresher | json('/v1/schedule')
+        if @schedule:
+          for [slug, project] of entries(@schedule.projects) key slug:
+            <div.four.wide.column>
+              <a.ui.card style="min-height: 100px" href=router.rel(slug)>
+                <div.content>
+                  <div.header>
+                    project.title or slug or '<bad-project>'
+                  <div.meta>
+                    slug
+                  <div.description>
+                    let groups = entry_list(project.groups)
+                    if groups.length > 3:
+                      `${ groups.length } groups`
+                    elif groups.length > 0:
+                      for [gname, ginfo] of groups key gname:
+                        <span.ui.label>
+                          gname
+                    else:
+                      "No groups"
+      <div.row>
+        <div.ui.basic.segment>
+          <button.ui.button>
+            link {click} go('new') -> @router
+            "New Project"
+  elif router.at('new'):
+    new_project(router)
+  elif let [slug, sub] = router.value():
+    if sub.at():
+      project_page(sub, slug)
+    elif sub.at('new_group'):
+      new_group(sub, slug)
+    elif let [gslug, sub] = sub.value():
+      group_settings(sub, slug, gslug)
+
+
+view new_project(router):
+  <div>
+    store @form = form() | graphql_action(`
+      mutation CreateProject($slug: String!, $title: String!) {
+        createProject(slug: $slug, title: $title) { ok }
+      }
+    `)
+    store @global_help = value
+    store @slug_help = value
+    <h1.ui.header>
+      "New Project"
+      <i.help.green.circle.icon.pointer.pointer>
+        link {click} set(not @global_help) -> @global_help
+
+    if @global_help:
+      <div.ui.stackable.grid.container>
+        <div.four.wide.column>
+          <p.ui.piled.segment.transition.jiggle> "
+            Project is just a group of deployment environments kept together
+            for convenience.
+          "
+    <form.ui.form.stackable.grid.container>
+      <div.row>
+        store @slug = field(form, 'slug',  '')
+        <div.ui.field.six.wide.column>
+          <div.ui.icon.input.loading?(false)>
+            <input type="text" placeholder="Slug" id=slug.id>
+              link {input} set(this.value) -> @slug
+            <i.check?(false).mark.icon>
+          <div class="ui pointing label">
+            <label for=slug.id>
+              "Lowercase alphanumerics and dash only. "
+            <i.green.circle.question.icon.pointer>
+              link {click} set(not @slug_help) -> @slug_help
+        if @slug_help:
+          <div.ui.field.eight.wide.column.transition.jiggle>
+            <div.ui.piled.segment>
+              <p> "
+                A globally recognizable slug for your project.
+                It used as a part of path in URLs and also part of a name
+                of a running container.
+              "
+
+      <div.row>
+        store @title = field(form, 'title',  '')
+        <div.ui.field.six.wide.column>
+          <div.ui.icon.input.loading?(false)>
+            <input type="text" placeholder="Title" id=title.id>
+              link {input} set(this.value) -> @title
+            <i.check?(false).mark.icon>
+          <div class="ui pointing label">
+            <label for=title.id>
+              "Nice and concise title for the project in UI"
+
+      <div.ui.horizontal.divider>
+        <button.ui.large.primary.button type="button">
+          link {click} submit(event) -> @form
+          "Create"
+
+view project_page(router, slug):
+  <div.ui.grid.container>
+    store @schedule = pick('data') | refresher | json('/v1/schedule')
+    if @schedule:
+      let proj = @schedule.projects[slug]
+      <div.row>
+        <h1.ui.header>
+          proj.title or slug
+      <div.row>
+          for [gslug, group] of entries(proj.groups) key gslug:
+            <div.four.wide.column>
+              <a.ui.card style="min-height: 100px" href=router.rel(gslug)>
+                <div.content>
+                  <div.header>
+                    group.title or gslug or '<bad-project>'
+                  <div.meta>
+                    gslug
+                  <div.description>
+                    let services = entry_list(group.services)
+                    if services.length > 3:
+                      `${ services.length } services`
+                    elif services.length > 0:
+                      for [sname, sinfo] of services key sname:
+                        <span.ui.basic.image.label>
+                          <i.cube.icon>
+                          sname
+                          <div.detail>
+                            `×${sinfo.instances}`
+                    else:
+                      "No services"
+      <div.row>
+        <div.ui.basic.segment>
+          <button.ui.button>
+            link {click} go('new_group') -> @router
+            "New Group"
+    else:
+      "Loading..."
+
+view new_group(router, project):
+  <div>
+    store @form = form() | graphql_action(`
+      mutation CreateGroup(
+        $project: String!
+        $slug: String!
+        $title: String!
+      ) {
+        createGroup(project: $project, slug: $slug, title: $title) { ok }
+      }
+    `, {'project': project})
+    store @global_help = value
+    store @slug_help = value
+    <h1.ui.header>
+      "New Group"
+      <i.help.green.circle.icon.pointer.pointer>
+        link {click} set(not @global_help) -> @global_help
+
+    if @global_help:
+      <div.ui.stackable.grid.container>
+        <div.four.wide.column>
+          <p.ui.piled.segment.transition.jiggle> "
+            Group of services
+          "
+    <form.ui.form.stackable.grid.container>
+      <div.row>
+        store @slug = field(form, 'slug',  '')
+        <div.ui.field.six.wide.column>
+          <div.ui.icon.input.loading?(false)>
+            <input type="text" placeholder="Slug" id=slug.id>
+              link {input} set(this.value) -> @slug
+            <i.check?(false).mark.icon>
+          <div class="ui pointing label">
+            <label for=slug.id>
+              "Lowercase alphanumerics and dash only. "
+            <i.green.circle.question.icon.pointer>
+              link {click} set(not @slug_help) -> @slug_help
+        if @slug_help:
+          <div.ui.field.eight.wide.column.transition.jiggle>
+            <div.ui.piled.segment>
+              <p> "
+                Group slug is used as a part of path in URLs and
+                also part of a name of a running container.
+              "
+
+      <div.row>
+        store @title = field(form, 'title',  '')
+        <div.ui.field.six.wide.column>
+          <div.ui.icon.input.loading?(false)>
+            <input type="text" placeholder="Title" id=title.id>
+              link {input} set(this.value) -> @title
+            <i.check?(false).mark.icon>
+          <div class="ui pointing label">
+            <label for=title.id>
+              "Nice and concise title for the group in UI"
+
+      <div.ui.horizontal.divider>
+        <button.ui.large.primary.button type="button">
+          link {click} submit(event) -> @form
+          "Create"

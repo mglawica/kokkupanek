@@ -1,5 +1,6 @@
 import {go} from 'khufu-routing'
 import {sources} from './settings/sources.khufu'
+import {projects} from './settings/projects.khufu'
 
 style:
   .grid.container
@@ -12,6 +13,12 @@ view settings(router):
       <a.item.active?(router.at('sources')) href=router.rel('sources')>
         link {click} go(event) -> @router
         "Sources"
+      <a.item.active?(router.at('projects')) href=router.rel('projects')>
+        link {click} go(event) -> @router
+        "Projects"
     if let sub = router.at('sources'):
       <div.column>
         sources(sub)
+    elif let sub = router.at('projects'):
+      <div.column>
+        projects(sub)
