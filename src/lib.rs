@@ -10,3 +10,4 @@ pub mod wrapper;
 pub mod timestamp;
 pub mod lwwset;
 pub mod version;
+pub mod shield;
