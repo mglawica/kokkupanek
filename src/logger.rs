@@ -1,5 +1,5 @@
-use std::cell::RefCell;
 use std::panic::set_hook;
+use std::sync::Mutex;
 
 use log::{self, Record, Level, Metadata};
 
@@ -12,7 +12,7 @@ static mut LOGGER: GlobalLogger = GlobalLogger {
 unsafe impl Sync for GlobalLogger {}
 
 struct GlobalLogger {
-    cur: Option<RefCell<Logger>>,
+    cur: Option<Mutex<Logger>>,
 }
 
 struct Logger {
@@ -35,7 +35,7 @@ impl SchedulerLogger {
             if LOGGER.cur.is_some() {
                 panic!("nested scheduler logging context")
             }
-            LOGGER.cur = Some(RefCell::new(Logger {
+            LOGGER.cur = Some(Mutex::new(Logger {
                 buf: String::with_capacity(8096),
                 sublogger: String::with_capacity(16),
             }))
@@ -47,7 +47,7 @@ impl SchedulerLogger {
             LOGGER.cur.take().expect("scheduler is set and not nested")
         };
         drop(self);
-        return buf.into_inner().buf;
+        return buf.into_inner().expect("logger not poisoned").buf;
     }
 }
 
@@ -63,7 +63,7 @@ impl Sublogger {
     pub fn context(name: &str) -> Sublogger {
         unsafe {
             let mut lg = LOGGER.cur.as_mut()
-                .expect("logger is set").borrow_mut();
+                .expect("logger is set").lock().expect("logger not poisoned");
             let sub = Sublogger(lg.sublogger.len());
             if lg.sublogger.len() != 0 {
                 lg.sublogger.push('.');
@@ -78,7 +78,7 @@ impl Drop for Sublogger {
     fn drop(&mut self) {
         unsafe {
             let mut lg = LOGGER.cur.as_mut()
-                .expect("logger is set").borrow_mut();
+                .expect("logger is set").lock().expect("logger not poisoned");
             lg.sublogger.truncate(self.0);
         }
     }
@@ -96,7 +96,7 @@ impl log::Log for GlobalLogger {
                 panic!("logging when no schedule is active");
             }
             let ref mut log = *self.cur.as_ref()
-                .expect("logger is set").borrow_mut();
+                .expect("logger is set").lock().expect("logger not poisoned");
             writeln!(&mut log.buf,
                 "{:>5}: {}[{}]: {}",
                     record.level(),
