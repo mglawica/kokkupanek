@@ -120,8 +120,18 @@ commands:
         - --debug-force-leader
         - --dry-run
 
+  cargo: !Command
+    description: Run any cargo command
+    container: wasm
+    symlink-name: cargo
+    run: [cargo]
+
   check: !Command
     description: Run cargo check (with wasm32 target)
     container: wasm
-    symlink-name: cargo
     run: [cargo, check, --target=wasm32-unknown-unknown]
+
+  test: !Command
+    description: Run tests (on native platform)
+    container: wasm
+    run: [cargo, test]
