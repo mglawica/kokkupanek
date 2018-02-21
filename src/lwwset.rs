@@ -1,4 +1,5 @@
-use std::cmp::max;
+use std::cmp::{max, Ord};
+use std::borrow::Borrow;
 use std::fmt;
 use std::collections::BTreeMap;
 use std::default::Default;
@@ -38,7 +39,10 @@ impl<K: Ord, V> Map<K, V>
     pub fn insert(&mut self, k: K, v: V) {
         self.0.insert(k, Item::Value(v));
     }
-    pub fn get(&mut self, k: &K) -> Option<&V> {
+    pub fn get<Q>(&mut self, k: &Q) -> Option<&V>
+        where K: Borrow<Q>,
+              Q: Ord + ?Sized,
+    {
         self.0.get(k).and_then(|x| match x {
             &Item::Value(ref x) => Some(x),
             _ => None,
