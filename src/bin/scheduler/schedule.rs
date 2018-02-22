@@ -2,6 +2,7 @@ use std::collections::{BTreeMap};
 
 use kk::lwwset;
 use kk::input;
+use kk::shield::Shield;
 
 use sources::Source;
 use projects::Project;
@@ -18,7 +19,7 @@ pub struct Schedule {
     pub projects: lwwset::Map<String, Project>,
     // Compatibility things
     #[serde(default, skip_serializing_if="BTreeMap::is_empty")]
-    pub nodes: BTreeMap<String, Node>,
+    pub nodes: BTreeMap<String, Shield<Node>>,
 }
 
 impl input::Schedule for Schedule {

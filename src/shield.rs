@@ -1,3 +1,5 @@
+use std::cmp::Ord;
+use std::collections::{hash_map, btree_map};
 use std::default::Default;
 
 use serde_json::Value as Json;
@@ -8,6 +10,10 @@ use serde_json::Value as Json;
 pub enum Shield<T> {
     Valid(T),
     Invalid(Json),
+}
+
+pub trait ShieldExt<'a, T> {
+    fn ensure_valid(self) -> &'a mut T;
 }
 
 impl<T: Default> Default for Shield<T> {
@@ -37,5 +43,22 @@ impl<T: Default> Shield<T> {
             Shield::Valid(ref x) => Some(x),
             Shield::Invalid(_) => None,
         }
+    }
+}
+
+impl<'a, K: 'a, V: 'a> ShieldExt<'a, V> for hash_map::Entry<'a, K, Shield<V>>
+    where V: Default
+{
+    fn ensure_valid(self) -> &'a mut V {
+        self.or_insert_with(Default::default).ensure_valid()
+    }
+}
+
+impl<'a, K: 'a, V: 'a> ShieldExt<'a, V> for btree_map::Entry<'a, K, Shield<V>>
+    where K: Ord,
+          V: Default,
+{
+    fn ensure_valid(self) -> &'a mut V {
+        self.or_insert_with(Default::default).ensure_valid()
     }
 }
