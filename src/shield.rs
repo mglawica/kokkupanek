@@ -10,6 +10,12 @@ pub enum Shield<T> {
     Invalid(Json),
 }
 
+impl<T: Default> Default for Shield<T> {
+    fn default() -> Shield<T> {
+        Shield::Valid(Default::default())
+    }
+}
+
 impl<T: Default> Shield<T> {
     /// Replaces invalid reference with Default::default
     pub fn ensure_valid(&mut self) -> &mut T {
