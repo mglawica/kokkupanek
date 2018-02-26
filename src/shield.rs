@@ -21,6 +21,11 @@ impl<T: Default> Default for Shield<T> {
         Shield::Valid(Default::default())
     }
 }
+impl<T> From<T> for Shield<T> {
+    fn from(val: T) -> Shield<T> {
+        Shield::Valid(val)
+    }
+}
 
 impl<T: Default> Shield<T> {
     /// Replaces invalid reference with Default::default
