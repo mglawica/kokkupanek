@@ -36,6 +36,11 @@ pub fn with_generator(time: Timestamp) -> Context {
     return Context;
 }
 
+/// Returns current global random number generator
+pub fn global_rng() -> GlobalRng {
+    GlobalRng
+}
+
 impl Drop for Context {
     fn drop(&mut self) {
         unsafe {
