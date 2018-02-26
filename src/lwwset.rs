@@ -1,7 +1,7 @@
 use std::cmp::{max, Ord};
 use std::borrow::Borrow;
 use std::fmt;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, btree_map};
 use std::default::Default;
 use std::iter::FromIterator;
 
@@ -25,6 +25,8 @@ pub trait Mergeable {
     fn timestamp(&self) -> Timestamp;
     fn merge(&mut self, other: Self);
 }
+
+pub struct Iter<'a, K:'a , V:'a>(btree_map::Iter<'a, K, Item<V>>);
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Map<K: Ord, V>(BTreeMap<K, Item<V>>);
@@ -122,6 +124,28 @@ impl<K: Ord, V> Map<K, V>
 impl<K: Ord, V> Default for Map<K, V> {
     fn default() -> Map<K, V> {
         Map(BTreeMap::default())
+    }
+}
+
+impl<'a, K: Ord +'a, V: 'a> IntoIterator for &'a Map<K, V> {
+    type Item = (&'a K, &'a V);
+    type IntoIter = Iter<'a, K, V>;
+    fn into_iter(self) -> Iter<'a, K, V> {
+        Iter(self.0.iter())
+    }
+}
+
+impl<'a, K: Ord + 'a, V: 'a> Iterator for Iter<'a, K, V> {
+    type Item = (&'a K, &'a V);
+    fn next(&mut self) -> Option<(&'a K, &'a V)> {
+        loop {
+            match self.0.next() {
+                None => break None,
+                Some((k, &Item::Value(ref v))) => break Some((k, v)),
+                Some((_, &Item::Deleted {..})) => continue,
+                Some((_, &Item::BadData(..))) => continue,
+            }
+        }
     }
 }
 
