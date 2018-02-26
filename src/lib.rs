@@ -1,3 +1,4 @@
+extern crate rand;
 extern crate serde;
 extern crate serde_json;
 #[macro_use] extern crate serde_derive;
@@ -11,3 +12,4 @@ pub mod timestamp;
 pub mod lwwset;
 pub mod version;
 pub mod shield;
+pub mod random;

@@ -2,7 +2,7 @@ static mut NOW: Option<u64> = None;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-pub struct Timestamp(u64);
+pub struct Timestamp(pub(crate) u64);
 
 pub struct Context;
 

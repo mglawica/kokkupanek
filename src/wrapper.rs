@@ -11,6 +11,7 @@ use serde_json::{from_slice, to_vec};
 use logger;
 use input;
 use timestamp;
+use random;
 
 
 pub unsafe fn scheduler<F, I, R, E>(ptr: *const u8, len: usize, f: F) -> *mut c_void
@@ -61,6 +62,7 @@ fn logging_wrapper<F, I, R, E>(input: I, f: F) -> (Result<R, ()>, String)
 {
     let logger = logger::SchedulerLogger::context();
     let _timestamp = timestamp::with_timestamp(input.now());
+    let _generator = random::with_generator(input.now());
     match f(input) {
         Ok(schedule) => {
             let mut out = logger.into_inner();
