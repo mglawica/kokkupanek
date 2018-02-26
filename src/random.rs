@@ -1,6 +1,6 @@
 use rand::{XorShiftRng, SeedableRng};
 use timestamp::Timestamp;
-pub use rand::{Rng};
+pub use rand::{Rng, Rand, seq};
 
 pub struct GlobalRng;
 
