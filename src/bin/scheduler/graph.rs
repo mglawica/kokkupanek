@@ -1,14 +1,11 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 
-use juniper::{RootNode, InputValue, FieldError, execute};
+use juniper::{RootNode, FieldError};
 
 use schedule::Schedule;
 use sources;
 use projects;
 use services;
-
-use serde_json::{Value, to_value};
 
 
 #[derive(Debug)]
@@ -21,41 +18,13 @@ pub type Schema<'a> = RootNode<'a, &'a Query, &'a Mutation>;
 
 #[derive(Debug)]
 pub struct Context<'a> {
-    pub schedule: &'a RefCell<Schedule>,
+    pub schedule: RefCell<&'a mut Schedule>,
 }
 
 #[derive(GraphQLObject, Debug)]
 #[graphql(description="A generic successful response")]
 pub struct Okay {
     pub ok: bool,
-}
-
-#[derive(Deserialize, Clone, Debug)]
-pub struct GraphqlAction {
-    query: String,
-    #[serde(default, rename="operationName")]
-    operation_name: Option<String>,
-    #[serde(default)]
-    variables: HashMap<String, InputValue>,
-}
-
-pub fn execute_action(action: &GraphqlAction, schedule: &RefCell<Schedule>)
-    -> Value
-{
-    let result = execute(&action.query,
-        action.operation_name.as_ref().map(|x| &x[..]),
-        &Schema::new(&Query, &Mutation),
-        &action.variables,
-        &Context { schedule },
-    );
-    match result {
-        Ok((data, errors)) => {
-            json!({"data": data, "errors": errors})
-        }
-        Err(err) => {
-            to_value(&err).expect("can serialize juniper's error")
-        }
-    }
 }
 
 
