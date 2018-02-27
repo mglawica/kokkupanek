@@ -1,6 +1,6 @@
 extern crate kokkupanek as kk;
 
-extern crate serde_json;
+#[macro_use] extern crate serde_json;
 #[macro_use] extern crate log;
 #[macro_use] extern crate juniper;
 #[macro_use] extern crate serde_derive;
@@ -33,13 +33,12 @@ type Input = GenericInput<action::Action, Schedule, Value>;
 #[no_mangle]
 pub extern "C" fn scheduler(ptr: *const u8, len: usize) -> *mut c_void {
     unsafe {
-        wrapper::scheduler(ptr, len,
-            |input: Input| -> Result<Schedule, String> {
-                let schedule = Schedule::from_parents(input.parents);
-                let cell = RefCell::new(schedule);
-                info!("Scheduler works!");
-                action::execute_actions(&cell, &input.actions);
-                return Ok(cell.into_inner());
-            })
+        wrapper::scheduler(ptr, len, |input: Input| -> Result<_, String> {
+            let schedule = Schedule::from_parents(input.parents);
+            let cell = RefCell::new(schedule);
+            info!("Scheduler works!");
+            let actions = action::execute_actions(&cell, input.actions);
+            return Ok((cell.into_inner(), actions));
+        })
     }
 }

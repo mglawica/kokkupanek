@@ -2,10 +2,10 @@ use std::os::raw::{c_void};
 use std::fmt::{self, Write};
 use std::mem;
 use std::slice;
+use std::collections::HashMap;
 
 use serde::{Serialize};
 use serde::de::{DeserializeOwned};
-use serde_json::Value as Json;
 use serde_json::{from_slice, to_vec};
 
 use logger;
@@ -14,11 +14,28 @@ use timestamp;
 use random;
 
 
-pub unsafe fn scheduler<F, I, R, E>(ptr: *const u8, len: usize, f: F) -> *mut c_void
-    where F: FnOnce(I) -> Result<R, E>,
-          E: fmt::Display,
+#[derive(Serialize, Debug)]
+struct SchedulerResult<'a, S: Serialize, A: Serialize> {
+    schedule: S,
+    log: &'a String,
+    #[serde(default, skip_serializing_if="HashMap::is_empty")]
+    actions: HashMap<u64, A>,
+}
+
+#[derive(Serialize, Debug)]
+struct ErrorResult<'a> {
+    schedule: (),
+    log: &'a str,
+}
+
+
+pub unsafe fn scheduler<F, I, R, E, A>(ptr: *const u8, len: usize, f: F)
+    -> *mut c_void
+    where F: FnOnce(I) -> Result<(R, HashMap<u64, A>), E>,
           I: DeserializeOwned + input::Input,
           R: Serialize,
+          E: fmt::Display,
+          A: Serialize,
 {
     let input = slice::from_raw_parts(ptr, len);
     let mut out = serde_wrapper(input, f);
@@ -27,46 +44,60 @@ pub unsafe fn scheduler<F, I, R, E>(ptr: *const u8, len: usize, f: F) -> *mut c_
     return out_ptr as *mut c_void;
 }
 
-fn serde_wrapper<'x, F, I, R, E>(data: &'x [u8], f: F) -> Vec<u8>
-    where F: FnOnce(I) -> Result<R, E>,
-          E: fmt::Display,
+fn serde_wrapper<'x, F, I, R, E, A>(data: &'x [u8], f: F) -> Vec<u8>
+    where F: FnOnce(I) -> Result<(R, HashMap<u64, A>), E>,
           I: DeserializeOwned + input::Input,
           R: Serialize,
+          E: fmt::Display,
+          A: Serialize,
 {
     let input = match from_slice(data) {
         Ok(inp) => inp,
         Err(e) => {
-            return to_vec(
-                &(Json::Null, format!("Error deserialing input: {}", e))
-            ).expect("can serialize error")
+            return to_vec(&ErrorResult {
+                schedule: (),
+                log: &format!("Error deserialing input: {}", e),
+            }).expect("can serialize error")
         }
     };
     let (res, mut log) = logging_wrapper(input, f);
     let sres = match res {
-        Ok(x) => to_vec(&(x, &log)),
-        Err(()) => to_vec(&(Json::Null, &log)),
+        Ok((schedule, actions)) => to_vec(&SchedulerResult {
+            schedule,
+            actions,
+            log: &log
+        }),
+        Err(()) => to_vec(&ErrorResult {
+            schedule: (),
+            log: &log,
+        }),
     };
     match sres {
         Ok(result) => result,
         Err(e) => {
             writeln!(&mut log, "\nError serializing output: {}", e).ok();
-            return to_vec(&(Json::Null, log)).expect("can serialize error")
+            return to_vec(&ErrorResult {
+                schedule: (),
+                log: &log,
+            }).expect("can serialize error")
         }
     }
 }
 
-fn logging_wrapper<F, I, R, E>(input: I, f: F) -> (Result<R, ()>, String)
-    where F: FnOnce(I) -> Result<R, E>,
+fn logging_wrapper<F, I, R, E, A>(input: I, f: F)
+    -> (Result<(R, HashMap<u64, A>), ()>, String)
+    where F: FnOnce(I) -> Result<(R, HashMap<u64, A>), E>,
           E: fmt::Display,
           I: input::Input,
+          A: Serialize,
 {
     let logger = logger::SchedulerLogger::context();
     let _timestamp = timestamp::with_timestamp(input.now());
     let _generator = random::with_generator(input.now());
     match f(input) {
-        Ok(schedule) => {
+        Ok((schedule, actions)) => {
             let mut out = logger.into_inner();
-            return (Ok(schedule), out);
+            return (Ok((schedule, actions)), out);
         }
         Err(e) => {
             error!("Error running scheduler: {}", e);

@@ -8,6 +8,8 @@ use sources;
 use projects;
 use services;
 
+use serde_json::{Value, to_value};
+
 
 #[derive(Debug)]
 pub struct Query;
@@ -37,14 +39,23 @@ pub struct GraphqlAction {
     variables: HashMap<String, InputValue>,
 }
 
-pub fn execute_action(action: &GraphqlAction, schedule: &RefCell<Schedule>) {
-    let r = execute(&action.query,
+pub fn execute_action(action: &GraphqlAction, schedule: &RefCell<Schedule>)
+    -> Value
+{
+    let result = execute(&action.query,
         action.operation_name.as_ref().map(|x| &x[..]),
         &Schema::new(&Query, &Mutation),
         &action.variables,
         &Context { schedule },
     );
-    info!("Result {:#?}", r);
+    match result {
+        Ok((data, errors)) => {
+            json!({"data": data, "errors": errors})
+        }
+        Err(err) => {
+            to_value(&err).expect("can serialize juniper's error")
+        }
+    }
 }
 
 
