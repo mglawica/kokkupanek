@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap};
+use std::collections::{BTreeMap, HashMap};
 
 use kk::lwwset;
 use kk::input;
@@ -8,7 +8,23 @@ use sources::Source;
 use projects::Project;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
+pub struct NodeService {
+    pub image: String,
+    pub config: String,
+    pub instances: u32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+pub struct NodeRole {
+    pub template: Option<String>,
+    pub version: String,
+    #[serde(default, skip_serializing_if="HashMap::is_empty")]
+    pub services: HashMap<String, Shield<NodeService>>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Node {
+    pub roles: HashMap<String, Shield<NodeRole>>
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]

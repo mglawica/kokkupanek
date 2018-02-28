@@ -11,14 +11,14 @@ use graph::{Okay, Context};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Service {
-    timestamp: Timestamp,
-    source: String,
-    config: String,
-    version: String,
-    branch: Option<String>,
-    instances: i32,
+    pub timestamp: Timestamp,
+    pub source: String,
+    pub config: String,
+    pub version: String,
+    pub branch: Option<String>,
+    pub instances: u32,
     #[serde(default, skip_serializing_if="BTreeMap::is_empty")]
-    variables: BTreeMap<String, Json>,
+    pub variables: BTreeMap<String, Json>,
 }
 
 #[derive(GraphQLInputObject, Debug)]
@@ -83,7 +83,7 @@ pub fn create_service(executor: &Executor<Context>,
         config: service.config,
         version: service.version,
         branch: service.branch,
-        instances: service.instances,
+        instances: service.instances as u32,
         variables: BTreeMap::new(), // TODO(tailhook) variables
     });
     return Ok(Okay { ok: true })

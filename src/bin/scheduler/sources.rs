@@ -29,8 +29,8 @@ pub struct KeyMeta {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Container {
-    daemons: BTreeMap<String, Daemon>,
-    commands: BTreeMap<String, Command>,
+    pub daemons: BTreeMap<String, Daemon>,
+    pub commands: BTreeMap<String, Command>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -51,9 +51,9 @@ pub struct NewDaemon {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Deployment {
-    timestamp: Timestamp,
-    branches: Vec<String>,
-    containers: BTreeSet<String>,
+    pub timestamp: Timestamp,
+    pub branches: Vec<String>,
+    pub containers: BTreeSet<String>,
 }
 
 #[derive(GraphQLEnum, Debug)]
