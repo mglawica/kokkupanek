@@ -35,18 +35,15 @@ pub struct Container {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
-    config: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Command {
-    config: String,
 }
 
 #[derive(GraphQLInputObject, Debug)]
 #[graphql(description="A daemon in new deployment")]
 pub struct NewDaemon {
-    name: String,
     config: String,
     image: String,
     variables: Option<Vec<NewVariable>>,
@@ -55,7 +52,7 @@ pub struct NewDaemon {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Deployment {
     timestamp: Timestamp,
-    branch: Option<String>,
+    branches: Vec<String>,
     containers: BTreeSet<String>,
 }
 
@@ -77,7 +74,6 @@ pub struct NewVariable {
 #[derive(GraphQLInputObject, Debug)]
 #[graphql(description="A daemon in new deployment")]
 pub struct NewCommand {
-    name: String,
     config: String,
     image: String,
 }
@@ -86,7 +82,7 @@ pub struct NewCommand {
 #[graphql(description="An ack for new deployment")]
 pub struct NewDeployment {
     version: String,
-    branch: Option<String>,
+    branches: Option<Vec<String>>,
     daemons: Vec<NewDaemon>,
     commands: Vec<NewCommand>,
 }
@@ -134,7 +130,7 @@ pub fn add_deployment(executor: &Executor<Context>,
     };
     source.deployments.insert(config.version, Deployment {
         timestamp: Timestamp::now(),
-        branch: config.branch,
+        branches: config.branches.unwrap_or_else(Vec::new),
         containers: config.commands.iter().map(|x| x.image.clone())
             .chain(config.daemons.iter().map(|x| x.image.clone()))
             .collect(),
@@ -145,8 +141,7 @@ pub fn add_deployment(executor: &Executor<Context>,
                 daemons: BTreeMap::new(),
                 commands: BTreeMap::new(),
             })
-            .commands.insert(cmd.name, Command {
-                config: cmd.config,
+            .commands.insert(cmd.config, Command {
             });
     }
     for cmd in config.daemons {
@@ -155,8 +150,7 @@ pub fn add_deployment(executor: &Executor<Context>,
                 daemons: BTreeMap::new(),
                 commands: BTreeMap::new(),
             })
-            .daemons.insert(cmd.name, Daemon {
-                config: cmd.config,
+            .daemons.insert(cmd.config, Daemon {
             });
     }
     return Ok(Okay { ok: true })

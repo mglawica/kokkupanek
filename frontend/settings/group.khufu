@@ -76,7 +76,7 @@ view new_service(router, project, group):
     <form.ui.stackable.grid.container>
       let sources = @schedule and @schedule.sources
       store @source = field(form, 'source', '')
-      store @process = field(form, 'process', '')
+      store @process = field(form, 'config', '')
       store @slug = field(form, 'slug',  '')
       store @version = field(form, 'version', '')
       store @instances = field(form, 'instances',  1)
@@ -191,8 +191,6 @@ view new_service(router, project, group):
                     link {click} set(dname) -> @process
                     link {click} set(dname) -> @slug
                     dname
-                    <code>
-                      ` (${ daemon_info.config })`
 
           <div.ui.field.six.wide.column>
             <div.ui.selection.dropdown

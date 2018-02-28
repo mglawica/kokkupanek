@@ -13,7 +13,7 @@ use graph::{Okay, Context};
 pub struct Service {
     timestamp: Timestamp,
     source: String,
-    process: String,
+    config: String,
     version: String,
     branch: Option<String>,
     instances: i32,
@@ -26,7 +26,7 @@ pub struct Service {
 pub struct NewService {
     slug: String,
     source: String,
-    process: String,
+    config: String,
     version: String,
     branch: Option<String>,
     instances: i32,
@@ -80,7 +80,7 @@ pub fn create_service(executor: &Executor<Context>,
     group.services.insert(service.slug, Service {
         timestamp: Timestamp::now(),
         source: service.source,
-        process: service.process,
+        config: service.config,
         version: service.version,
         branch: service.branch,
         instances: service.instances,
