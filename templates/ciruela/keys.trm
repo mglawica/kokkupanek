@@ -1,0 +1,11 @@
+## syntax: indent
+## validate default: ^[a-zA-Z0-9_-]+$
+## validate inline: ^[^\r\n]+$
+## for name, info in full_schedule.sources
+    ----- {{ name }} -----
+    ## for key, kinfo in info.keys
+        ## if key  # TODO(tailhook) should validate when inserting
+            {{ key | inline }} {{ kinfo.comment | inline }}
+        ## endif
+    ## endfor
+## endfor

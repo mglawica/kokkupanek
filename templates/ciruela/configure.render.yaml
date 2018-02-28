@@ -1,0 +1,32 @@
+templates:
+  keys: keys.trm
+  code_configs: code_configs.trm
+  assets_configs: assets_configs.trm
+  dirs: dirs.trm
+commands:
+- !SplitText
+  section: ^-----\s*(\S*)\s*-----$
+  validate: '^[a-z0-9_-]+$'
+  src: "{{ files.keys }}"
+  dest: "/etc/ciruela/keys/source-(*).key"
+- !SplitText
+  section: ^---\s*#\s*source\s*:\s*(\S*)\s*$
+  validate: '^[a-z0-9_-]+$'
+  src: "{{ files.code_configs }}"
+  dest: "/etc/ciruela/configs/code-(*).yaml"
+- !SplitText
+  section: ^---\s*#\s*source\s*:\s*(\S*)\s*$
+  validate: '^[a-z0-9_-]+$'
+  src: "{{ files.code_configs }}"
+  dest: "/etc/ciruela/configs/assets-(*).yaml"
+- !RootCommand
+  - "xargs"
+  - "--arg-file={{ files.dirs }}"
+  - "mkdir"
+  - "-p"
+- !RootCommand
+  - "xargs"
+  - "--arg-file={{ files.dirs }}"
+  - "chown"
+  - "ciruela"
+- !RootCommand [pkill, ciruela]

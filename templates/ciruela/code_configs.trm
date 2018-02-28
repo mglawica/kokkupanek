@@ -1,0 +1,14 @@
+## syntax: indent
+## validate default: ^[a-zA-Z0-9_-]+$
+## for name, info in full_schedule.sources
+    --- # source: {{ name }}
+    directory: /var/lib/code-images/{{ name }}
+    num-levels: 2
+    append-only: true
+    upload-keys: ["source-{{ name }}"]
+    auto-clean: true
+    keep-recent: 2 days
+    keep-list-file: /var/lib/verwalter/used-images/source-{{ name }}.txt
+    keep-min-directories: 3
+    keep-max-directories: 100
+## endfor
