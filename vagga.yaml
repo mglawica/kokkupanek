@@ -64,7 +64,8 @@ commands:
       mkdir -p scheduler/v1
       mkdir -p tmp/cfg
       mkdir -p tmp/cfg/frontend
-      ln -sfn ../../../public tmp/cfg/frontend/common
+      ln -sfn ../../../public tmp/cfg/frontend/kk
+      ln -sfn /usr/share/verwalter/frontend tmp/cfg/frontend/common
       mkdir -p tmp/cfg/machine
       mkdir -p tmp/cfg/runtime
       mkdir -p tmp/cfg/sandbox
