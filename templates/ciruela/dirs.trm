@@ -1,6 +1,6 @@
 ## syntax: indent
 ## validate default: ^[a-zA-Z0-9_-]+$
 ## for name, _ in full_schedule.sources
-    /opt/code-images/{{ name }}
-    /opt/assets-images/{{ name }}
+    /var/lib/code-images/{{ name }}
+    /var/lib/assets-images/{{ name }}
 ## endfor
