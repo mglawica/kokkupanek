@@ -5,7 +5,7 @@ import {is_valid_slug} from '../validators'
 import {keep_empty_line, check, extract_comment} from './sources'
 import {entries} from '../iter'
 import {pick, json, refresher} from '../request'
-import {graphql_action} from '../graphql'
+import {graphql_action, on_success} from '../graphql'
 
 
 style:
@@ -40,11 +40,13 @@ view sources(router):
 
 view new_source(router):
   <div>
-    store @form = form() | graphql_action(`
-      mutation CreateSource($slug: String!, $keys: [Key!]!) {
-        createSource(slug: $slug, keys: $keys) { ok }
-      }
-    `)
+    store @form = form()
+      | on_success(router, go, '/settings/sources')
+      | graphql_action(`
+          mutation CreateSource($slug: String!, $keys: [Key!]!) {
+            createSource(slug: $slug, keys: $keys) { ok }
+          }
+        `)
     store @global_help = value
     store @slug_help = value
     <h1>
@@ -159,35 +161,39 @@ view new_source(router):
           <button.ui.button.disabled> "Generate a New Key"
           <div class="ui left pointing label">
             "Not implemented yet"
-      <div.row>
-        <div.wide.column>
-          <div.ui.horizontal.divider.header>
-            <i.icon.server>
-            "Servers"
-          <div.ui.raised.segments style="position: relative">
-            <div.ui.segment>
-              <div.ui.left.ribbon.label.green> "Active"
-              <div.ui.basic.label> "alpha"
-              <div.ui.basic.label> "gamma"
-            <div.ui.segment>
-              <div.ui.left.ribbon.label.yellow> "Backup"
-              <div.ui.basic.label> "beta"
-            <div.ui.segment>
-              <div.ui.left.ribbon.label.teal> "Max Allowed"
-              <div.ui.blue.label>
-                <i.large.plus.square.outline.icon>
-                "25 "
-                "servers"
-            <div.ui.segment>
-              <div.ui.left.ribbon.label.blue> "Assets"
-              <div.ui.basic.label> "sigma"
-              <div.ui.basic.label> "delta"
-          <div.field>
-            <button.ui.button.disabled> "Change Server Alignment"
-            <div class="ui left pointing label">
-              "Not implemented yet"
+      if false:
+        <div.row>
+          <div.wide.column>
+            <div.ui.horizontal.divider.header>
+              <i.icon.server>
+              "Servers"
+            <div.ui.raised.segments style="position: relative">
+              <div.ui.segment>
+                <div.ui.left.ribbon.label.green> "Active"
+                <div.ui.basic.label> "alpha"
+                <div.ui.basic.label> "gamma"
+              <div.ui.segment>
+                <div.ui.left.ribbon.label.yellow> "Backup"
+                <div.ui.basic.label> "beta"
+              <div.ui.segment>
+                <div.ui.left.ribbon.label.teal> "Max Allowed"
+                <div.ui.blue.label>
+                  <i.large.plus.square.outline.icon>
+                  "25 "
+                  "servers"
+              <div.ui.segment>
+                <div.ui.left.ribbon.label.blue> "Assets"
+                <div.ui.basic.label> "sigma"
+                <div.ui.basic.label> "delta"
+            <div.field>
+              <button.ui.button.disabled> "Change Server Alignment"
+              <div class="ui left pointing label">
+                "Not implemented yet"
       <div.ui.horizontal.divider>
-        <button.ui.large.primary.button type="button">
+        <button.ui.large.primary.button
+          .disabled?(form.remote.loading)
+          .loading?(form.remote.loading)
+          type="button">
           link {click} submit(event) -> @form
           "Save"
 

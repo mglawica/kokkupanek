@@ -6,16 +6,30 @@ let GLOBAL_COUNTER = 0
 
 export function form() {
     let listeners = []
+    let remote = {}
     let store = {
+        remote,
         getState() {
             return root.getState()
         },
         dispatch(action) {
             switch(action.type) {
+                case 'loading':
+                    remote.loading = true
+                    remote.errors = null
+                    break
+                case 'success':
+                    remote.loading = false
+                    break
+                case 'error':
+                    remote.loading = false
+                    remote.errors = action.errors
+                    break
                 case CANCEL:
                     listeners = null;  // save some memory
                     break;
             }
+            store._trigger()
         },
         subscribe(callback) {
             listeners.push(callback)
