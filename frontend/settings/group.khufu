@@ -1,12 +1,13 @@
 import {set, init, value} from '../value'
 import {form, field, submit} from '../form'
-import {graphql_action} from '../graphql'
+import {graphql_action, on_success} from '../graphql'
 import {pretty} from '../debug'
 import {parse_int} from '../validators'
 import {entries, first_key} from '../iter'
 import {go} from 'khufu-routing'
 import {pick, json, refresher} from '../request'
 import {all_daemons, process_info} from './deploy'
+import {make_slug} from './group'
 
 
 view group_settings(router, project, group):
@@ -31,8 +32,8 @@ view group_view(router, project, group):
             <div.ui.label.right.ribbon.gray>
               "No services defined"
       <div.row>
-        for [sname, service] of entries(grp.services) key sname:
-          <div.four.wide.column>
+        <div.ui.cards>
+          for [sname, service] of entries(grp.services) key sname:
             <div.ui.card style="min-height: 100px">
               <div.content>
                 <div.header>
@@ -54,15 +55,17 @@ view group_view(router, project, group):
 
 view new_service(router, project, group):
   <div>
-    store @form = form() | graphql_action(`
-      mutation CreateService(
-        $project: String!
-        $group: String!
-        $service: NewService!
-      ) {
-        createService(project: $project, group: $group, service: $service) { ok }
-      }
-    `, {'project': project, 'group': group}, 'service')
+    store @form = form()
+      | on_success(router, go, '.')
+      | graphql_action(`
+        mutation CreateService(
+          $project: String!
+          $group: String!
+          $service: NewService!
+        ) {
+          createService(project: $project, group: $group, service: $service) { ok }
+        }
+      `, {'project': project, 'group': group}, 'service')
     store @schedule = pick('data') | refresher | json('/v1/schedule')
     store @global_help = value
     store @slug_help = value
@@ -70,8 +73,6 @@ view new_service(router, project, group):
       "New Service"
       <i.help.green.circle.icon.pointer.pointer>
         link {click} set(not @global_help) -> @global_help
-    <pre>
-      pretty(@form)
 
     <form.ui.stackable.grid.container>
       let sources = @schedule and @schedule.sources
@@ -186,11 +187,11 @@ view new_service(router, project, group):
               <div.text.default?(not @process)>
                 @process or "Process"
               <div.menu.transition.visible?(@processes_open)>
-                for [dname, daemon_info] of entries(daemons) key dname:
+                for [cfg, daemon_info] of entries(daemons) key cfg:
                   <div.item>
-                    link {click} set(dname) -> @process
-                    link {click} set(dname) -> @slug
-                    dname
+                    link {click} set(cfg) -> @process
+                    link {click} set(make_slug(cfg, daemons)) -> @slug
+                    cfg
 
           <div.ui.field.six.wide.column>
             <div.ui.selection.dropdown
@@ -262,6 +263,9 @@ view new_service(router, project, group):
 
 
       <div.ui.horizontal.divider>
-        <button.ui.large.primary.button.disabled?(not pro) type="button">
+        <button.ui.large.primary.button
+            .disabled?(form.remote.loading or not pro)
+            .loading?(form.remote.loading)
+            type="button">
           link {click} submit(event) -> @form
           "Create"

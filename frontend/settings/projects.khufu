@@ -2,7 +2,7 @@ import {set, init, value} from '../value'
 import {form, field, submit} from '../form'
 import {go} from 'khufu-routing'
 import {pretty} from '../debug'
-import {graphql_action} from '../graphql'
+import {graphql_action, on_success} from '../graphql'
 import {pick, json, refresher} from '../request'
 import {entries, entry_list} from '../iter'
 import {group_settings} from './group.khufu'
@@ -19,10 +19,10 @@ view projects(router):
       <div.row>
         <h1.ui.header> "Projects"
       <div.row>
-        store @schedule = pick('data') | refresher | json('/v1/schedule')
-        if @schedule:
-          for [slug, project] of entries(@schedule.projects) key slug:
-            <div.four.wide.column>
+        <div.ui.cards>
+          store @schedule = pick('data') | refresher | json('/v1/schedule')
+          if @schedule:
+            for [slug, project] of entries(@schedule.projects) key slug:
               <a.ui.card style="min-height: 100px" href=router.rel(slug)>
                 <div.content>
                   <div.header>
@@ -57,11 +57,13 @@ view projects(router):
 
 view new_project(router):
   <div>
-    store @form = form() | graphql_action(`
-      mutation CreateProject($slug: String!, $title: String!) {
-        createProject(slug: $slug, title: $title) { ok }
-      }
-    `)
+    store @form = form()
+      | on_success(router, go, '/settings/projects')
+      | graphql_action(`
+        mutation CreateProject($slug: String!, $title: String!) {
+          createProject(slug: $slug, title: $title) { ok }
+        }
+      `)
     store @global_help = value
     store @slug_help = value
     <h1.ui.header>
@@ -110,7 +112,10 @@ view new_project(router):
               "Nice and concise title for the project in UI"
 
       <div.ui.horizontal.divider>
-        <button.ui.large.primary.button type="button">
+        <button.ui.large.primary.button
+            .disabled?(form.remote.loading)
+            .loading?(form.remote.loading)
+            type="button">
           link {click} submit(event) -> @form
           "Create"
 
@@ -154,15 +159,17 @@ view project_page(router, slug):
 
 view new_group(router, project):
   <div>
-    store @form = form() | graphql_action(`
-      mutation CreateGroup(
-        $project: String!
-        $slug: String!
-        $title: String!
-      ) {
-        createGroup(project: $project, slug: $slug, title: $title) { ok }
-      }
-    `, {'project': project})
+    store @form = form()
+      | on_success(router, go, '.')
+      | graphql_action(`
+        mutation CreateGroup(
+          $project: String!
+          $slug: String!
+          $title: String!
+        ) {
+          createGroup(project: $project, slug: $slug, title: $title) { ok }
+        }
+      `, {'project': project})
     store @global_help = value
     store @slug_help = value
     <h1.ui.header>
@@ -209,6 +216,9 @@ view new_group(router, project):
               "Nice and concise title for the group in UI"
 
       <div.ui.horizontal.divider>
-        <button.ui.large.primary.button type="button">
+        <button.ui.large.primary.button
+            .disabled?(form.remote.loading)
+            .loading?(form.remote.loading)
+            type="button">
           link {click} submit(event) -> @form
           "Create"
