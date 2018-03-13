@@ -1,6 +1,7 @@
 import {go} from 'khufu-routing'
 import {crumbs} from './bread.khufu'
 import {settings} from './settings.khufu'
+import {dashboard} from './dashboard.khufu'
 
 
 view main(router, version):
@@ -17,3 +18,5 @@ view main(router, version):
           <i.setting.icon title="Settings">
     if let sub = router.at('settings'):
       settings(sub)
+    else:
+      dashboard(router)

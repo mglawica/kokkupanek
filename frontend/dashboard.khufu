@@ -1,0 +1,32 @@
+import {entries} from './iter'
+import {pick, json, refresher} from './request'
+
+style:
+  .card
+    min-width: 400px
+  .right.right
+    text-align: right
+
+view dashboard(router):
+  <div.ui.container>
+    <div.ui.cards>
+      store @schedule = pick('data') | refresher | json('/v1/schedule')
+      for [pname, project] of entries(@schedule.projects) key pname:
+        for [gname, group] of entries(project.groups) key gname:
+          <a.ui.card href=router.rel('/group/' + pname + '/' + gname)>
+            <div.content>
+              <div.header>
+                `${ pname }: ${ gname }`
+            <div.content>
+              <table.ui.table>
+                for [sname, service] of entries(group.services) key sname:
+                  <tr>
+                    <td nowrap>
+                      <i.cube.icon>
+                      `${ sname }`
+                    <td.right nowrap>
+                      <span.ui.small.circular.label>
+                        `x${ service.instances }`
+                    <td.right nowrap>
+                      <span.ui.small.teal.label>
+                        `${ service.version }`
