@@ -41,7 +41,7 @@ impl<K: Ord, V> Map<K, V>
     pub fn insert(&mut self, k: K, v: V) {
         self.0.insert(k, Item::Value(v));
     }
-    pub fn get<Q>(&mut self, k: &Q) -> Option<&V>
+    pub fn get<Q>(&self, k: &Q) -> Option<&V>
         where K: Borrow<Q>,
               Q: Ord + ?Sized,
     {
