@@ -119,6 +119,9 @@ impl<K: Ord, V> Map<K, V>
             }
         }
     }
+    pub fn iter(&self) -> Iter<K, V> {
+        self.into_iter()
+    }
 }
 
 impl<K: Ord, V> Default for Map<K, V> {
