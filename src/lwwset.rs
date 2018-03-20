@@ -1,9 +1,10 @@
-use std::cmp::{max, Ord};
 use std::borrow::Borrow;
-use std::fmt;
+use std::cmp::{max, Ord};
 use std::collections::{BTreeMap, btree_map};
 use std::default::Default;
+use std::fmt;
 use std::iter::FromIterator;
+use std::mem;
 
 use serde_json::Value as Json;
 
@@ -55,6 +56,20 @@ impl<K: Ord, V> Map<K, V>
             &mut Item::Value(ref mut x) => Some(x),
             _ => None,
         })
+    }
+    pub fn remove(&mut self, k: &K) -> Option<V> {
+        if let Some(e) = self.0.get_mut(k) {
+            let v = mem::replace(e, Item::Deleted {
+                timestamp: Timestamp::now(),
+                deleted: true,
+            });
+            match v {
+                Item::Value(x) => Some(x),
+                _ => None,
+            }
+        } else {
+            None
+        }
     }
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
