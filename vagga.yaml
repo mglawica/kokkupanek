@@ -31,11 +31,11 @@ containers:
     - !UbuntuUniverse
     - &pkgs !Install [build-essential, ca-certificates, vim]
     - &rust !TarInstall
-      url: https://static.rust-lang.org/dist/rust-1.24.1-x86_64-unknown-linux-gnu.tar.gz
+      url: https://static.rust-lang.org/dist/rust-1.25.0-x86_64-unknown-linux-gnu.tar.gz
       script: "./install.sh --prefix=/usr --components=rustc,cargo \
                --components=rustc,rust-std-x86_64-unknown-linux-gnu,cargo"
     - !TarInstall
-      url: "https://static.rust-lang.org/dist/rust-std-1.24.1-wasm32-unknown-unknown.tar.gz"
+      url: "https://static.rust-lang.org/dist/rust-std-1.25.0-wasm32-unknown-unknown.tar.gz"
       script: "./install.sh --prefix=/usr --components=rust-std-wasm32-unknown-unknown"
     - !Sh cargo install --root=/usr wasm-gc
     - &bulk !Tar
