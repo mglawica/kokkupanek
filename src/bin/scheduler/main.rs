@@ -1,6 +1,7 @@
 extern crate kokkupanek as kk;
 
 extern crate serde_json;
+extern crate serde_millis;
 #[macro_use] extern crate log;
 #[macro_use] extern crate juniper;
 #[macro_use] extern crate serde_derive;

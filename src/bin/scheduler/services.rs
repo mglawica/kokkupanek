@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap};
+use std::time::SystemTime;
 
-use kk::timestamp::Timestamp;
 use kk::lwwset::Mergeable;
+use kk::timestamp;
 use serde_json::{Value as Json};
 
 use juniper::{Executor, FieldError};
@@ -11,7 +12,8 @@ use graph::{Okay, Context};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Service {
-    pub timestamp: Timestamp,
+    #[serde(with="::serde_millis")]
+    pub timestamp: SystemTime,
     pub source: String,
     pub config: String,
     pub version: String,
@@ -42,7 +44,7 @@ pub struct Variable {
 }
 
 impl Mergeable for Service {
-    fn timestamp(&self) -> Timestamp {
+    fn timestamp(&self) -> SystemTime {
         self.timestamp
     }
     fn merge(&mut self, other: Service) {
@@ -78,7 +80,7 @@ pub fn create_service(executor: &Executor<Context>,
             "slug must not be empty", service.slug.into()));
     }
     group.services.insert(service.slug, Service {
-        timestamp: Timestamp::now(),
+        timestamp: timestamp::now(),
         source: service.source,
         config: service.config,
         version: service.version,

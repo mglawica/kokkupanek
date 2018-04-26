@@ -1,5 +1,6 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use rand::{XorShiftRng, SeedableRng};
-use timestamp::Timestamp;
 pub use rand::{Rng, Rand, seq};
 
 pub struct GlobalRng;
@@ -24,12 +25,13 @@ impl Rng for GlobalRng {
     }
 }
 
-pub fn with_generator(time: Timestamp) -> Context {
+pub fn with_generator(time: SystemTime) -> Context {
+    let seed = time.duration_since(UNIX_EPOCH).expect("valid time");
     unsafe {
         RANDOM = Some(XorShiftRng::from_seed([
-            (time.0 >> 32) as u32,
-            (time.0 & 0xFFFFFFFF) as u32,
-            0,
+            (seed.as_secs() >> 32) as u32,
+            (seed.as_secs() & 0xFFFFFFFF) as u32,
+            seed.subsec_nanos(),
             0,
         ]));
     }

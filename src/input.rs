@@ -1,8 +1,7 @@
 use std::net::SocketAddr;
 use std::collections::{BTreeMap, HashMap};
 use std::collections::hash_map;
-
-use timestamp::Timestamp;
+use std::time::SystemTime;
 
 
 #[derive(Clone, Debug, Deserialize)]
@@ -10,13 +9,16 @@ pub struct Peer {
     pub addr: Option<SocketAddr>,
     pub name: String,
     pub hostname: String,
-    pub known_since: Timestamp,
-    pub last_report_direct: Option<Timestamp>,
+    #[serde(with="::serde_millis")]
+    pub known_since: SystemTime,
+    #[serde(with="::serde_millis")]
+    pub last_report_direct: Option<SystemTime>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct GenericInput<A, S, R> {
-    pub now: Timestamp,
+    #[serde(with="::serde_millis")]
+    pub now: SystemTime,
     pub current_host: String,
     pub current_id: String, //Id,
     pub parents: Vec<S>,
@@ -33,11 +35,11 @@ pub struct GenericInput<A, S, R> {
 pub struct Hosts<'a>(Option<&'a str>, hash_map::Iter<'a, String, Peer>);
 
 pub trait Input {
-    fn now(&self) -> Timestamp;
+    fn now(&self) -> SystemTime;
 }
 
 impl<A, S, R> Input for GenericInput<A, S, R> {
-    fn now(&self) -> Timestamp {
+    fn now(&self) -> SystemTime {
         self.now
     }
 }

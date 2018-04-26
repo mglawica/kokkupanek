@@ -1,7 +1,9 @@
+use std::time::SystemTime;
+
 use juniper::{Executor, FieldError};
 
 use kk::lwwset::{self, Mergeable};
-use kk::timestamp::Timestamp;
+use kk::timestamp;
 
 use graph::{Okay, Context};
 use services::{Service};
@@ -9,7 +11,8 @@ use services::{Service};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Project {
-    pub timestamp: Timestamp,
+    #[serde(with="::serde_millis")]
+    pub timestamp: SystemTime,
     pub slug: String,
     pub title: String,
     #[serde(default, skip_serializing_if="lwwset::Map::is_empty")]
@@ -18,7 +21,8 @@ pub struct Project {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Group {
-    pub timestamp: Timestamp,
+    #[serde(with="::serde_millis")]
+    pub timestamp: SystemTime,
     pub slug: String,
     pub title: String,
     #[serde(default, skip_serializing_if="lwwset::Map::is_empty")]
@@ -31,7 +35,7 @@ pub fn create_project(executor: &Executor<Context>, slug: String, title: String)
     let mut schedule = executor.context().schedule.borrow_mut();
     info!("Create project {:?} slug {:?}", title, slug);
     schedule.projects.insert(slug.clone(), Project {
-        timestamp: Timestamp::now(),
+        timestamp: timestamp::now(),
         groups: lwwset::Map::new(),
         slug, title,
     });
@@ -39,7 +43,7 @@ pub fn create_project(executor: &Executor<Context>, slug: String, title: String)
 }
 
 impl Mergeable for Project {
-    fn timestamp(&self) -> Timestamp {
+    fn timestamp(&self) -> SystemTime {
         self.timestamp
     }
     fn merge(&mut self, other: Project) {
@@ -56,7 +60,7 @@ impl Mergeable for Project {
 }
 
 impl Mergeable for Group {
-    fn timestamp(&self) -> Timestamp {
+    fn timestamp(&self) -> SystemTime {
         self.timestamp
     }
     fn merge(&mut self, other: Group) {
@@ -86,7 +90,7 @@ pub fn create_group(executor: &Executor<Context>,
         }
     };
     proj.groups.insert(slug.clone(), Group {
-        timestamp: Timestamp::now(),
+        timestamp: timestamp::now(),
         services: lwwset::Map::new(),
         slug, title,
     });

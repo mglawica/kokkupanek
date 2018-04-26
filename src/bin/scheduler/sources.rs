@@ -1,10 +1,11 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::cmp::max;
+use std::time::SystemTime;
 
 use juniper::{Executor, FieldError};
 
 use kk::lwwset::{self, Mergeable};
-use kk::timestamp::Timestamp;
+use kk::timestamp;
 
 use graph::{Context, Okay};
 
@@ -13,7 +14,8 @@ type Version = String;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Source {
-    pub timestamp: Timestamp,
+    #[serde(with="::serde_millis")]
+    pub timestamp: SystemTime,
     pub keys: lwwset::Map<String, KeyMeta>,
     #[serde(default, skip_serializing_if="BTreeMap::is_empty")]
     pub deployments: BTreeMap<Version, Deployment>,
@@ -23,7 +25,8 @@ pub struct Source {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct KeyMeta {
-    timestamp: Timestamp,
+    #[serde(with="::serde_millis")]
+    timestamp: SystemTime,
     comment: String,
 }
 
@@ -51,7 +54,8 @@ pub struct NewDaemon {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Deployment {
-    pub timestamp: Timestamp,
+    #[serde(with="::serde_millis")]
+    pub timestamp: SystemTime,
     pub branches: Vec<String>,
     pub containers: BTreeSet<String>,
 }
@@ -101,11 +105,11 @@ pub fn create_source(executor: &Executor<Context>,
     let mut schedule = executor.context().schedule.borrow_mut();
     info!("Create source {:?}, keys {:?}", slug, keys);
     schedule.sources.insert(slug, Source {
-        timestamp: Timestamp::now(),
+        timestamp: timestamp::now(),
         keys: keys.into_iter()
             .map(|key| {
                 (key.key, KeyMeta {
-                    timestamp: Timestamp::now(),
+                    timestamp: timestamp::now(),
                     comment: key.comment,
                 })
             }).collect(),
@@ -129,7 +133,7 @@ pub fn add_deployment(executor: &Executor<Context>,
         }
     };
     source.deployments.insert(config.version, Deployment {
-        timestamp: Timestamp::now(),
+        timestamp: timestamp::now(),
         branches: config.branches.unwrap_or_else(Vec::new),
         containers: config.commands.iter().map(|x| x.image.clone())
             .chain(config.daemons.iter().map(|x| x.image.clone()))
@@ -158,7 +162,7 @@ pub fn add_deployment(executor: &Executor<Context>,
 
 
 impl Mergeable for Source {
-    fn timestamp(&self) -> Timestamp {
+    fn timestamp(&self) -> SystemTime {
         self.timestamp
     }
     fn merge(&mut self, other: Source) {
@@ -170,7 +174,7 @@ impl Mergeable for Source {
 }
 
 impl Mergeable for KeyMeta {
-    fn timestamp(&self) -> Timestamp {
+    fn timestamp(&self) -> SystemTime {
         self.timestamp
     }
     fn merge(&mut self, other: KeyMeta) {

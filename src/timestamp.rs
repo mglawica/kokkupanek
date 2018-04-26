@@ -1,26 +1,22 @@
-static mut NOW: Option<u64> = None;
+use std::time::SystemTime;
 
-#[derive(Deserialize, Serialize, Debug, Clone, Copy)]
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-pub struct Timestamp(pub(crate) u64);
+static mut NOW: Option<SystemTime> = None;
 
 pub struct Context;
 
-impl Timestamp {
-    pub fn now() -> Timestamp {
-        unsafe {
-            match NOW {
-                Some(x) => Timestamp(x),
-                None => panic!("No timestamp set. \
-                                Probably not in scheduler context"),
-            }
+pub fn now() -> SystemTime {
+    unsafe {
+        match NOW {
+            Some(x) => x,
+            None => panic!("No timestamp set. \
+                            Probably not in scheduler context"),
         }
     }
 }
 
-pub fn with_timestamp(val: Timestamp) -> Context {
+pub fn with_timestamp(val: SystemTime) -> Context {
     unsafe {
-        NOW = Some(val.0);
+        NOW = Some(val);
     }
     return Context;
 }

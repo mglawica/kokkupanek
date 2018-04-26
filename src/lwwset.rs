@@ -5,17 +5,19 @@ use std::default::Default;
 use std::fmt;
 use std::iter::FromIterator;
 use std::mem;
+use std::time::SystemTime;
+
+use timestamp;
 
 use serde_json::Value as Json;
-
-use timestamp::Timestamp;
 
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Item<T> {
     Deleted {
-        timestamp: Timestamp,
+        #[serde(with="::serde_millis")]
+        timestamp: SystemTime,
         deleted: bool
     },
     Value(T),
@@ -23,7 +25,7 @@ pub enum Item<T> {
 }
 
 pub trait Mergeable {
-    fn timestamp(&self) -> Timestamp;
+    fn timestamp(&self) -> SystemTime;
     fn merge(&mut self, other: Self);
 }
 
@@ -60,7 +62,7 @@ impl<K: Ord, V> Map<K, V>
     pub fn remove(&mut self, k: &K) -> Option<V> {
         if let Some(e) = self.0.get_mut(k) {
             let v = mem::replace(e, Item::Deleted {
-                timestamp: Timestamp::now(),
+                timestamp: timestamp::now(),
                 deleted: true,
             });
             match v {
