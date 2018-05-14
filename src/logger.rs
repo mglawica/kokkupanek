@@ -8,6 +8,8 @@ static mut LOGGER: GlobalLogger = GlobalLogger {
     cur: None,
 };
 
+static mut INITED: bool = false;
+
 #[cfg(target_arch="wasm32")]
 unsafe impl Sync for GlobalLogger {}
 
@@ -31,6 +33,9 @@ extern {
 
 impl SchedulerLogger {
     pub fn context() -> SchedulerLogger {
+        if !unsafe { INITED } {
+            init();
+        }
         unsafe {
             if LOGGER.cur.is_some() {
                 panic!("nested scheduler logging context")
@@ -112,6 +117,7 @@ impl log::Log for GlobalLogger {
 
 pub fn init() {
     unsafe {
+        INITED = true;
         log::set_logger(&LOGGER).expect("log init ok");
     }
     log::set_max_level(log::LevelFilter::Debug);

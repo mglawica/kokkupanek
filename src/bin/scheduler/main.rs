@@ -11,7 +11,6 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 
 use serde_json::{Value};
-use kk::logger;
 use kk::wrapper;
 use kk::graphql;
 use kk::input::Schedule as ScheduleTrait;
@@ -29,7 +28,6 @@ pub use schedule::Schedule;
 
 
 fn main() {
-    logger::init();
 }
 
 type Input = GenericInput<graphql::Action, Schedule, Value>;
