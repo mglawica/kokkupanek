@@ -30,6 +30,7 @@ pub trait Mergeable {
 }
 
 pub struct Iter<'a, K:'a , V:'a>(btree_map::Iter<'a, K, Item<V>>);
+pub struct IterMut<'a, K:'a , V:'a>(btree_map::IterMut<'a, K, Item<V>>);
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Map<K: Ord, V>(BTreeMap<K, Item<V>>);
@@ -139,6 +140,10 @@ impl<K: Ord, V> Map<K, V>
     pub fn iter(&self) -> Iter<K, V> {
         self.into_iter()
     }
+
+    pub fn iter_mut(&mut self) -> IterMut<K, V> {
+        self.into_iter()
+    }
 }
 
 impl<K: Ord, V> Default for Map<K, V> {
@@ -155,6 +160,14 @@ impl<'a, K: Ord +'a, V: 'a> IntoIterator for &'a Map<K, V> {
     }
 }
 
+impl<'a, K: Ord +'a, V: 'a> IntoIterator for &'a mut Map<K, V> {
+    type Item = (&'a K, &'a mut V);
+    type IntoIter = IterMut<'a, K, V>;
+    fn into_iter(self) -> IterMut<'a, K, V> {
+        IterMut(self.0.iter_mut())
+    }
+}
+
 impl<'a, K: Ord + 'a, V: 'a> Iterator for Iter<'a, K, V> {
     type Item = (&'a K, &'a V);
     fn next(&mut self) -> Option<(&'a K, &'a V)> {
@@ -164,6 +177,20 @@ impl<'a, K: Ord + 'a, V: 'a> Iterator for Iter<'a, K, V> {
                 Some((k, &Item::Value(ref v))) => break Some((k, v)),
                 Some((_, &Item::Deleted {..})) => continue,
                 Some((_, &Item::BadData(..))) => continue,
+            }
+        }
+    }
+}
+
+impl<'a, K: Ord + 'a, V: 'a> Iterator for IterMut<'a, K, V> {
+    type Item = (&'a K, &'a mut V);
+    fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
+        loop {
+            match self.0.next() {
+                None => break None,
+                Some((k, &mut Item::Value(ref mut v))) => break Some((k, v)),
+                Some((_, &mut Item::Deleted {..})) => continue,
+                Some((_, &mut Item::BadData(..))) => continue,
             }
         }
     }
