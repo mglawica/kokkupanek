@@ -144,6 +144,20 @@ impl<K: Ord, V> Map<K, V>
     pub fn iter_mut(&mut self) -> IterMut<K, V> {
         self.into_iter()
     }
+    pub fn clean_deleted(&mut self, min_timestamp: SystemTime) {
+        use self::Item::*;
+        let new = mem::replace(&mut self.0, BTreeMap::new());
+        for (key, item) in new.into_iter() {
+            match item {
+                Deleted { timestamp, .. } if timestamp < min_timestamp => {
+                    debug!("Dropping key {:?}", key);
+                }
+                item => {
+                    self.0.insert(key, item);
+                }
+            }
+        }
+    }
 }
 
 impl<K: Ord, V> Default for Map<K, V> {
