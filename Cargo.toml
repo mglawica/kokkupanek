@@ -13,6 +13,7 @@ serde_millis = "0.1.0"
 log = "0.4.1"
 matches = "0.1.6"
 rand = "0.4.2"
+failure = "0.1.1"
 
 # only for scheduler itself (make them optional?)
 juniper = { git="https://github.com/graphql-rust/juniper", rev="7933bf9", default-features=false, optional=true }

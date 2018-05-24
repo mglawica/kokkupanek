@@ -1,4 +1,5 @@
 extern crate rand;
+extern crate failure;
 extern crate serde;
 extern crate serde_millis;
 #[macro_use] extern crate serde_json;

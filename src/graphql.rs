@@ -1,7 +1,7 @@
 use std::collections::{HashMap, BTreeMap};
 
 use juniper::{GraphQLType, InputValue, RootNode, execute};
-use serde_json::{Value as Json, to_value};
+use serde_json::{Value as Json, to_value, from_value};
 
 
 #[derive(Deserialize, Clone, Debug)]
@@ -12,15 +12,6 @@ pub struct GraphqlAction {
     #[serde(default)]
     variables: HashMap<String, InputValue>,
 }
-
-#[derive(Deserialize, Clone, Debug)]
-#[serde(untagged)]
-pub enum Action {
-    #[allow(non_snake_case)]
-    Graphql(GraphqlAction),
-    Other(Json),
-}
-
 
 fn execute_action<'a, C, Q, M>(action: &GraphqlAction, context: &C,
     root_node: &RootNode<'a, Q, M>)
@@ -41,20 +32,20 @@ fn execute_action<'a, C, Q, M>(action: &GraphqlAction, context: &C,
     }
 }
 
-pub fn execute_actions<'a, C, Q, M>(actions: BTreeMap<u64, Action>,
+pub fn execute_actions<'a, C, Q, M>(actions: BTreeMap<u64, Json>,
     context: &C, root_node: &RootNode<'a, Q, M>)
     -> HashMap<u64, Json>
     where Q: GraphQLType<Context=C>,
           M: GraphQLType<Context=C>,
 {
     actions.into_iter().map(|(id, action)| {
-        let result = match action {
-            Action::Graphql(ref act) => {
-                execute_action(act, context, root_node)
+        let result = match from_value(action) {
+            Ok(act) => {
+                execute_action(&act, context, root_node)
             }
-            Action::Other(ref data) => {
-                warn!("Unknown action {:?}", data);
-                json!({"message": "unknown action"})
+            Err(ref error) => {
+                warn!("Unknown action {}: {}", id, error);
+                json!({"message": format!("bad action: {}", error)})
             }
         };
         (id, result)
