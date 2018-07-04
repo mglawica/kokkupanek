@@ -33,6 +33,7 @@ enum ErrorKind {
     Serialize,
     Deserialize,
     Internal,
+    Uninitialized,
     #[doc(hidden)]
     __Nonexhaustive,
 }
