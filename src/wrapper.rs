@@ -46,6 +46,11 @@ struct QueryError {
     backtrace: Option<String>,
 }
 
+#[derive(Debug, Fail)]
+#[fail(display="uninitialized state")]
+pub struct UninitializedError;
+
+
 pub unsafe fn scheduler<F, I, R, E, A>(ptr: *const u8, len: usize, f: F)
     -> *mut c_void
     where F: FnOnce(I) -> Result<(R, HashMap<u64, A>), E>,
@@ -95,16 +100,25 @@ fn json_serde_wrapper<'x, F, I, R>(data: &'x [u8], f: F) -> Vec<u8>
     let result = match f(input) {
         Ok(v) => Ok(v),
         Err(e) => {
-            let mut causes = Vec::new();
-            for c in e.causes() {
-                causes.push(c.to_string());
+            if e.downcast_ref::<UninitializedError>().is_some() {
+                Err(QueryError {
+                    kind: ErrorKind::Uninitialized,
+                    message: "query interface is not initialized".to_string(),
+                    causes: None,
+                    backtrace: None,
+                })
+            } else {
+                let mut causes = Vec::new();
+                for c in e.causes() {
+                    causes.push(c.to_string());
+                }
+                Err(QueryError {
+                    kind: ErrorKind::Internal,
+                    message: e.to_string(),
+                    causes: Some(causes),
+                    backtrace: Some(format!("{}", e.backtrace())),
+                })
             }
-            Err(QueryError {
-                kind: ErrorKind::Internal,
-                message: e.to_string(),
-                causes: Some(causes),
-                backtrace: Some(format!("{}", e.backtrace())),
-            })
         }
     };
     match to_vec(&result) {
