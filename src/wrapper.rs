@@ -4,7 +4,8 @@ use std::mem;
 use std::slice;
 use std::collections::HashMap;
 
-use serde::{Serialize};
+use failure::Error;
+use serde::{Serialize, Deserialize};
 use serde::de::{DeserializeOwned};
 use serde_json::{from_slice, to_vec};
 
@@ -12,7 +13,6 @@ use logger;
 use input;
 use timestamp;
 use random;
-
 
 #[derive(Serialize, Debug)]
 struct SchedulerResult<'a, S: Serialize, A: Serialize> {
@@ -28,6 +28,22 @@ struct ErrorResult<'a> {
     log: &'a str,
 }
 
+#[derive(Debug, Serialize)]
+enum ErrorKind {
+    Serialize,
+    Deserialize,
+    Internal,
+    #[doc(hidden)]
+    __Nonexhaustive,
+}
+
+#[derive(Debug, Serialize)]
+struct QueryError {
+    kind: ErrorKind,
+    message: String,
+    causes: Option<Vec<String>>,
+    backtrace: Option<String>,
+}
 
 pub unsafe fn scheduler<F, I, R, E, A>(ptr: *const u8, len: usize, f: F)
     -> *mut c_void
@@ -42,6 +58,67 @@ pub unsafe fn scheduler<F, I, R, E, A>(ptr: *const u8, len: usize, f: F)
     let out_ptr = out.as_mut_ptr();
     mem::forget(out);
     return out_ptr as *mut c_void;
+}
+
+pub unsafe fn json_call<'x, F, I, R>(ptr: *const u8, len: usize, f: F)
+    -> *mut c_void
+    where F: FnOnce(I) -> Result<R, Error>,
+          I: Deserialize<'x>,
+          R: Serialize,
+{
+    let input = slice::from_raw_parts(ptr, len);
+    let mut out = json_serde_wrapper(input, f);
+    let out_ptr = out.as_mut_ptr();
+    mem::forget(out);
+    return out_ptr as *mut c_void;
+}
+
+fn json_serde_wrapper<'x, F, I, R>(data: &'x [u8], f: F) -> Vec<u8>
+    where F: FnOnce(I) -> Result<R, Error>,
+          I: Deserialize<'x>,
+          R: Serialize,
+{
+    let input = match from_slice(data) {
+        Ok(inp) => inp,
+        Err(e) => {
+            return to_vec(
+                &Err::<(), _>(QueryError {
+                    kind: ErrorKind::Deserialize,
+                    message: e.to_string(),
+                    causes: None,
+                    backtrace: None,
+                })
+            ).expect("should serialize standard json");
+        }
+    };
+    let result = match f(input) {
+        Ok(v) => Ok(v),
+        Err(e) => {
+            let mut causes = Vec::new();
+            for c in e.causes() {
+                causes.push(c.to_string());
+            }
+            Err(QueryError {
+                kind: ErrorKind::Internal,
+                message: e.to_string(),
+                causes: Some(causes),
+                backtrace: Some(format!("{}", e.backtrace())),
+            })
+        }
+    };
+    match to_vec(&result) {
+        Ok(result) => result,
+        Err(e) => {
+            return to_vec(
+                &Err::<(), _>(QueryError {
+                    kind: ErrorKind::Serialize,
+                    message: e.to_string(),
+                    causes: None,
+                    backtrace: None,
+                })
+            ).expect("should serialize standard json");
+        }
+    }
 }
 
 fn serde_wrapper<'x, F, I, R, E, A>(data: &'x [u8], f: F) -> Vec<u8>
